@@ -17,7 +17,7 @@ Planned structure (for easy matplotlib analysis later down the line):
 
 6 - geometry.py for drag/lift analysis of the intake and whole craft
 
-8 - runModel.py runs all of the prior 7 modules in order and as needed, providing a nice little command line input/output
+7 - runModel.py runs all of the prior 6 modules in order and as needed, providing a nice little command line input/output
 
 
 
