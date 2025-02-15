@@ -24,3 +24,8 @@ Planned structure (for easy matplotlib analysis later down the line):
 
 
 Potentially, in future a .csv parser/writer and matplotlib stuff. For now, just those 8 files.
+
+Credit to the following:
+
+- BuzzerRookie for their ISA, used in this project as buzzerrookieisa.py
+- Kyle Niemeyer's Gas Dynamics notes, used in this project as kyleniemeyergasdynamics.py
