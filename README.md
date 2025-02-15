@@ -15,9 +15,7 @@ Planned structure (for easy matplotlib analysis later down the line):
 
 5 - exhaust.py for Rayleigh/isentropic analysis of either a de Laval nozzle or an expansion ramp/aerospike exhaust
 
-6 - geometryIntake.py for drag/lift analysis of the intake defined by intake.py
-
-7 - geometryWhole.py for drag/lift analysis of the whole craft, including geometryIntake.py data
+6 - geometry.py for drag/lift analysis of the intake and whole craft
 
 8 - runModel.py runs all of the prior 7 modules in order and as needed, providing a nice little command line input/output
 
