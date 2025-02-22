@@ -1,5 +1,4 @@
 #todo: proper error values, readouts for all areas at selected points (chamber, throat, nozzle)
-#current values are for a rocket engine similar to the Space Shuttle Main Engine (RS-25)
 
 import math
 import matplotlib.pyplot as plt
