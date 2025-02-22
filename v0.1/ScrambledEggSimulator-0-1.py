@@ -2,14 +2,16 @@ import math
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.optimize import root_scalar
+from scipy.optimize import fsolve
 from pint import UnitRegistry
 ureg = UnitRegistry()
 Q_ = ureg.Quantity
 
-import buzzerrookieisa as isa #isa(altitude)
+import buzzerrookieisa as isa
 import inputhelper as iohelper
 import kylesObliqueShocks as oblique
 import rayleigh
+import nozzleSolverModule as nozzle
 
 print()
 print("====================CONDITIONS====================")
@@ -93,6 +95,7 @@ def intakeSolver(ambientD, ambientP, ambientT, Minit, D1deg, D2deg, D3deg, D4deg
     p1 = obliquePres(gamma, Minit, theta1, ambientP)
     t1 = obliqueTemp(gamma, Minit, theta1, ambientT)
     M1 = obliqueMach(gamma, Minit, theta1, delta1)
+    rampP1 = p1
     print("Shock angle 1:", theta1deg)
     print("Density:", d1)
     print("Pressure:", p1)
@@ -106,6 +109,7 @@ def intakeSolver(ambientD, ambientP, ambientT, Minit, D1deg, D2deg, D3deg, D4deg
     p2 = obliquePres(gamma, M1, theta2, p1)
     t2 = obliqueTemp(gamma, M1, theta2, t1)
     M2 = obliqueMach(gamma, M1, theta2, delta2)
+    rampP2 = p2
     print("Shock angle 2:", theta2deg)
     print("Density:", d2)
     print("Pressure:", p2)
@@ -119,6 +123,7 @@ def intakeSolver(ambientD, ambientP, ambientT, Minit, D1deg, D2deg, D3deg, D4deg
     p3 = obliquePres(gamma, M2, theta3, p2)
     t3 = obliqueTemp(gamma, M2, theta3, t2)
     M3 = obliqueMach(gamma, M2, theta3, delta3)
+    rampP3 = p3
     print("Shock angle 3:", theta3deg)
     print("Density:", d3)
     print("Pressure:", p3)
@@ -138,9 +143,9 @@ def intakeSolver(ambientD, ambientP, ambientT, Minit, D1deg, D2deg, D3deg, D4deg
     print("Temperature:", t4)
     print("Mach", M4)
     print()
-    return d4, p4, t4, M4
+    return d4, p4, t4, M4, theta1, theta2, theta3, theta4, delta1, delta2, delta3, delta4, rampP1, rampP2, rampP3
     
-inletD, inletP, inletT, inletM = intakeSolver(ambientD, ambientP, ambientT, Mtest, D1deg, D2deg, D3deg, D4deg)
+inletD, inletP, inletT, inletM, theta1, theta2, theta3, theta4, delta1, delta2, delta3, delta4, rampP1, rampP2, rampP3 = intakeSolver(ambientD, ambientP, ambientT, Mtest, D1deg, D2deg, D3deg, D4deg)
 
 normalShockQuery = None
 
@@ -203,8 +208,9 @@ def ramjetCombustion(inletM, inletT, inletP, inletD, q):
     chokedT = exitT * ((((gamma + 1) * exitM)/(1 + gamma * exitM**2))**(-2))
     exitP = chokedP * ((gamma + 1) / (1 + gamma * exitM**2))
     exitD = chokedD * ((1 + gamma * exitM**2) / ((gamma + 1) * exitM**2))
-    #chokedT 
-    return exitM, exitT, exitSP_inletSP, exitP, exitD, exitSOS, exitV, chokedST, chokedT, chokedP, chokedD
+    exitSP = (1 / ((1 + ((gamma - 1) / 2) * exitM**2)**(-gamma / (gamma - 1)))) * exitP ###
+    chokedSP = (1 / (SP_chokedSP(exitM, gamma))) * exitSP ###NEW CODE MIGHT NOT WORK
+    return exitM, exitT, exitSP_inletSP, exitP, exitD, exitSOS, exitV, chokedST, chokedT, chokedP, chokedD, chokedSP
     
 #supersonic, mach decreases with heating, choked at throat, accelerates out exhaust
 def scramjetCombustion(inletM, inletT, inletP, inletD, q):
@@ -236,7 +242,9 @@ def scramjetCombustion(inletM, inletT, inletP, inletD, q):
     chokedT = exitT * ((((gamma + 1) * exitM)/(1 + gamma * exitM**2))**(-2))
     exitP = chokedP * ((gamma + 1) / (1 + gamma * exitM**2))
     exitD = chokedD * ((1 + gamma * exitM**2) / ((gamma + 1) * exitM**2))
-    return exitM, exitT, exitSP_inletSP, exitP, exitD, exitSOS, exitV, chokedST, chokedT, chokedP, chokedD
+    exitSP = (1 / ((1 + ((gamma - 1) / 2) * exitM**2)**(-gamma / (gamma - 1)))) * exitP ###
+    chokedSP = (1 / (SP_chokedSP(exitM, gamma))) * exitSP ###NEW CODE MIGHT NOT WORK
+    return exitM, exitT, exitSP_inletSP, exitP, exitD, exitSOS, exitV, chokedST, chokedT, chokedP, chokedD, chokedSP
 
 while True:
     normalShockQuery = input("Ramjet or scramjet (R or S): ")
@@ -274,9 +282,9 @@ qString = str("Input heat addition (max before choking = " + str(round(maxHeatin
 q = iohelper.restrictedInput(qString, 0, True, maxHeating, True)
 
 if normalShockQuery == "S":
-    exitM, exitT, exitSP_inletSP, exitP, exitD, exitSOS, exitV, chokedST, chokedT, chokedP, chokedD = scramjetCombustion(combustorM, combustorT, combustorP, combustorD, q)
+    exitM, exitT, exitSP_inletSP, exitP, exitD, exitSOS, exitV, chokedST, chokedT, chokedP, chokedD, chokedSP = scramjetCombustion(combustorM, combustorT, combustorP, combustorD, q)
 elif normalShockQuery == "R":
-    exitM, exitT, exitSP_inletSP, exitP, exitD, exitSOS, exitV, chokedST, chokedT, chokedP, chokedD = ramjetCombustion(combustorM, combustorT, combustorP, combustorD, q)
+    exitM, exitT, exitSP_inletSP, exitP, exitD, exitSOS, exitV, chokedST, chokedT, chokedP, chokedD, chokedSP = ramjetCombustion(combustorM, combustorT, combustorP, combustorD, q)
 
 print("Post-combustion conditions:")
 print("Mach", exitM)
@@ -287,17 +295,165 @@ print("Speed of sound (m/s):", exitSOS)
 print("Velocity (m/s):", exitV)
 exitSP_percentage = exitSP_inletSP * 100
 print("Exit stagnation pressure (% of inlet SP):", round(exitSP_percentage, 1))
+print()
+expansionRatio = iohelper.restrictedInput("Enter expansion ratio (chamber-exit for scram, throat-exit for ram): ", 0, True, 500, True)
+chamberA = 1
 
-#define the throat
-chokedM = 1
-print(chokedST)
-print(chokedT)
-print(chokedP)
-print(chokedD)
-
-#define de Laval nozzle
+#put the expansion nozzle shit here
+print()
+exhM, exhP, exhD, exhT, exhV, exhSP, exhST, exhSD = nozzle.runNozzleSolver(gamma, 287, 8314.5, 28.97, expansionRatio, exitM, exitP, exitT, exitD, chamberA)
 
 
-#heat addition brings flow closer to choking, scramjet lowers mach closer to 1, ramjet raises it closer to 1
-#then the flow has to be choked in the 
+print()
+#after this point we now calculate drag from the intake
+def shock1(x):
+    return x * math.tan(-(theta1))
+
+def shock2(x):
+    return x * math.tan(-(delta1 + theta2))
+
+def shock3(x):
+    return x * math.tan(-(delta1 + delta2 + theta3))
+
+def shock4(x):
+    return x * math.tan(theta4 - (delta1 + delta2 + delta3))
+
+s4l = 1 / (math.tan(theta4 - (delta1 + delta2 + delta3)))
+
+def surface3(x):
+    return (x - s4l) * math.tan(-(delta1 + delta2 + delta3)) + 1
+
+def surface3end(x):
+    return surface3(x) - shock3(x)
+
+def surface2(x):
+    return (x - surf3xMin) * math.tan(-(delta1 + delta2)) + surface3(surf3xMin)
+
+def surface2end(x):
+    return surface2(x) - shock2(x)
+
+def surface1(x):
+    return (x - surf2xMin) * math.tan(-(delta1)) + surface2(surf2xMin)
+
+def surface1end(x):
+    return surface1(x) - shock1(x)
+
+xMin = -65.0
+xMax = 5.0
+xPos = np.arange(xMin,xMax,0.1)
+
+surf3xMin = fsolve(surface3end, [0, 0])
+surf3xMax = s4l
+surf3xRange = np.linspace(surf3xMin, surf3xMax, num=100)
+
+surf2xMin = fsolve(surface2end, [0, 0])
+surf2xMax = surf3xMin
+surf2xRange = np.linspace(surf2xMin, surf2xMax, num=100)
+
+surf1xMin = fsolve(surface1end, [0, 0])
+surf1xMax = surf2xMin
+surf1xRange = np.linspace(surf1xMin, surf1xMax, num=100)
+
+shock1range = np.linspace(surf1xMin, s4l, num=100)
+shock2range = np.linspace(surf2xMin, s4l, num=100)
+shock3range = np.linspace(surf3xMin, s4l, num=100)
+shock4range = np.linspace(0., s4l, num=100)
+
+#surface area for a 1m slice
+def surfaceLength(x1, y1, x2, y2):
+    sxr = abs(x1 - x2)
+    syr = abs(y1 - y2)
+    pythag = sxr**2 + syr**2
+    return pythag**(1/2)
+
+F1xm = surf1xMin[0]
+F1ymAlmost = surface1(F1xm)
+F1ym = F1ymAlmost[0]
+F1xh = surf1xMax[0]
+F1yhAlmost = surface1(F1xh)
+F1yh = F1yhAlmost[0]
+print(F1xm, F1ym)
+print(F1xh, F1yh)
+lengthF1 = surfaceLength(F1xm, F1ym, F1xh, F1yh)
+print("Length:", lengthF1)
+
+F2xm = surf2xMin[0]
+F2ymAlmost = surface2(F2xm)
+F2ym = F2ymAlmost[0]
+F2xh = surf2xMax[0]
+F2yhAlmost = surface2(F2xh)
+F2yh = F2yhAlmost[0]
+print(F2xm, F2ym)
+print(F2xh, F2yh)
+lengthF2 = surfaceLength(F2xm, F2ym, F2xh, F2yh)
+print("Length:", lengthF2)
+
+F3xm = surf3xMin[0]
+F3ym = surface3(F3xm)
+F3xh = surf3xMax
+F3yh = surface3(F3xh)
+print(F3xm, F3ym)
+print(F3xh, F3yh)
+lengthF3 = surfaceLength(F3xm, F3ym, F3xh, F3yh)
+print("Length:", lengthF3)
+
+#force calculations
+print()
+print("Force calculations are for a 1m wide strip of aircraft surface")
+P1 = rampP1
+P2 = rampP2
+P3 = rampP3
+F1 = (lengthF1 * P1) / 1000
+print("Force 1:", F1, "kN")
+angleF1 = math.radians(90) - delta1
+F2 = (lengthF2 * P2) / 1000
+print("Force 2:", F2, "kN")
+angleF2 = math.radians(90) - (delta1 + delta2)
+F3 = (lengthF3 * P3) / 1000
+print("Force 3:", F3, "kN")
+angleF3 = math.radians(90) - (delta1 + delta2 + delta3)
+L1 = F1 * math.sin(angleF1)
+L2 = F2 * math.sin(angleF2)
+L3 = F3 * math.sin(angleF3)
+D1 = F1 * math.cos(angleF1)
+D2 = F2 * math.cos(angleF2)
+D3 = F3 * math.cos(angleF3)
+Ltotal = L1 + L2 + L3
+Dtotal = D1 + D2 + D3
+Ftotal = F1 + F2 + F3
+print("Total lift:", Ltotal, "kN")
+print("Total drag:", Dtotal, "kN")
+
+def ramjetThrust(exitD, exitV, inletD, inletV, exitP, ambientP, exitArea):
+    massFlow = inletD * inletV
+    newtonianThrust = (massFlow * exitV) - (massFlow * inletV)
+    pressureThrust = (exitP - ambientP) * exitArea
+    totalThrust = newtonianThrust + pressureThrust
+    return totalThrust
+
+inletVel = nozzle.getSoS(gamma, 287, inletT)
+thrustN = ramjetThrust(exhD, exhV, inletD, inletVel, exhP, ambientP, expansionRatio)
+thrustBeforeDrag = thrustN / 1000
+thrustAfterDrag = thrustBeforeDrag - Dtotal
+print("Thrust before drag (kN per m2 of combustor cross section):", thrustBeforeDrag)
+print("Thrust after drag:", thrustAfterDrag)
+print("Thrust and mass flow scale proprtionally with combustor area, dimensions scale with sqrt(10).")
+print("I.e. 1m2 = 1000kN, 100m long. 0.1m2 = 100kN, 31.6m long")
+print("Thanks guys and please subscribe and hit like!!!")
+
+#finally show plot
+fig, ax = plt.subplots()
+#ax.plot([xMin, xMax], [0, 0])
+ax.plot(shock1range, shock1(shock1range))
+ax.plot(shock2range, shock2(shock2range))
+ax.plot(shock3range, shock3(shock3range))
+ax.plot(shock4range, shock4(shock4range))
+ax.plot([0, s4l], [0, 0])
+ax.plot([s4l, s4l], [0, 1])
+ax.plot(surf3xRange, surface3(surf3xRange))
+ax.plot(surf2xRange, surface2(surf2xRange))
+ax.plot(surf1xRange, surface1(surf1xRange))
+ax.set_aspect('equal')
+plt.savefig("intakeGeometry.pdf")
+plt.show()
 
