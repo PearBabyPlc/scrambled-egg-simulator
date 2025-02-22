@@ -6,9 +6,9 @@ import math
 import numpy as np
 
 ### subsonic input parameters
-D = 0.4
-L = 2.0
-inletM = 0.5
+D = 0.75
+L = 3.2
+inletM = 3.5
 f = 0.002
 gamma = 1.4
 print("Diameter (m):", D)
