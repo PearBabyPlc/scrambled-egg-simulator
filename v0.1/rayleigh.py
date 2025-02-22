@@ -1,9 +1,6 @@
 import math
 import numpy as np
-import buzzerrookieisa as isa #isa(altitude)
-import inputhelper as iohelper
-from matplotlib import pyplot as plt
-import kylesObliqueShocks as oblique
+#import inputhelper as iohelper
 
 #testRatio = iohelper.restrictedInput("Enter test ratio (0 to 1): ", 0, True, 1, True)
 
