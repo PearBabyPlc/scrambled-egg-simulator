@@ -1,12 +1,9 @@
-Preamble:
-Bla.
-
 Structure:
 - inputhelper.py (my own silly little io thing with Yandere Dev tier if statements)
 - buzzerrookie_isa.py (BuzzerRookie's International Standard Atmosphere calculator, with a few tweaks for my use)
 - kyleniemeyer_gasdynamics.py (Whenever my attempts at solving various aerodynamics problems fails, Kyle Niemeyer is there to help)
 - formulaegg.py (Random equations and shit that other bits of code can use for science)
-- oldModel.py (Basically what was in v0.1's main file, but optimised to run better and be more helpful)
+- runModel.py (Numerically solving for the best performance at a given Mach for a set of ramp angles)
 - probably more to come...
 
 Credit to the following:
