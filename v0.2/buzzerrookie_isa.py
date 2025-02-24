@@ -39,67 +39,15 @@ def isa(altitudeGeom):
 	return temperature, pressure, density
 
 def Pisa(altitudeGeom):
-	a = [-0.0065, 0, 0.001, 0.0028]
-	h = [11000, 20000, 32000, 47000]
-	p0 = 101325
-	t0 = 288.15
-	prevh = 0
-	altitude = (smb * altitudeGeom) / (altitudeGeom + smb)
-	if altitude < 0 or altitude > 47000:
-		print("altitude must be in [0, 47000]")
-		return
-	for i in range(0, 4):
-		if altitude <= h[i]:
-			temperature, pressure = cal(p0, t0, a[i], prevh, altitude)
-			break;
-		else:
-			# sth like dynamic programming
-			t0, p0 = cal(p0, t0, a[i], prevh, h[i])
-			prevh = h[i]
-
-	density = pressure / (R * temperature)
-	return pressure
+        temperature, pressure, density = isa(altitudeGeom)
+        return pressure
 
 def Disa(altitudeGeom):
-	a = [-0.0065, 0, 0.001, 0.0028]
-	h = [11000, 20000, 32000, 47000]
-	p0 = 101325
-	t0 = 288.15
-	prevh = 0
-	altitude = (smb * altitudeGeom) / (altitudeGeom + smb)
-	if altitude < 0 or altitude > 47000:
-		print("altitude must be in [0, 47000]")
-		return
-	for i in range(0, 4):
-		if altitude <= h[i]:
-			temperature, pressure = cal(p0, t0, a[i], prevh, altitude)
-			break;
-		else:
-			# sth like dynamic programming
-			t0, p0 = cal(p0, t0, a[i], prevh, h[i])
-			prevh = h[i]
-
-	density = pressure / (R * temperature)
-	return density
+        temperature, pressure, density = isa(altitudeGeom)
+        return density
 
 def Tisa(altitudeGeom):
-	a = [-0.0065, 0, 0.001, 0.0028]
-	h = [11000, 20000, 32000, 47000]
-	p0 = 101325
-	t0 = 288.15
-	prevh = 0
-	altitude = (smb * altitudeGeom) / (altitudeGeom + smb)
-	if altitude < 0 or altitude > 47000:
-		print("altitude must be in [0, 47000]")
-		return
-	for i in range(0, 4):
-		if altitude <= h[i]:
-			temperature, pressure = cal(p0, t0, a[i], prevh, altitude)
-			break;
-		else:
-			# sth like dynamic programming
-			t0, p0 = cal(p0, t0, a[i], prevh, h[i])
-			prevh = h[i]
+        temperature, pressure, density = isa(altitudeGeom)
+        return temperature
 
-	density = pressure / (R * temperature)
-	return temperature
+
