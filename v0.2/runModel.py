@@ -8,18 +8,19 @@ import matplotlib.pyplot as plt
 import formulaegg as egg
 import itertools
 import nozzle
+import geometryDrag as geometry
 
 ### DEFINE TEST CONDITIONS ###
-Mlo = 4
+Mlo = 8
 Mhi = 15 #if step = 1, it'll only go up to Mhi-1, keep in mind
-step = 1
+step = 0.1
 Q = 30000
 gamma = 1.4
 R = 287
 Cp = 1005
 chamberA = 1
 expansionRatio = 15
-temperatureLimit = 4000
+temperatureLimit = 5000
 ### 
 
 def P_from_MQ(M, Q, gamma):
@@ -27,7 +28,7 @@ def P_from_MQ(M, Q, gamma):
     return P
 
 def alt_from_P(P):
-    rangeAlt = np.linspace(0, 47000, num=3000)
+    rangeAlt = np.linspace(0, 47000, num=4700)
     rangeP = [isa.Pisa(x) for x in rangeAlt]
     dictAlt = dict(zip(rangeAlt, rangeP))
     estAlt, estP = min(dictAlt.items(), key=lambda x: abs(P - x[1]))
@@ -130,13 +131,16 @@ def solveConfig(gamma, rampIteration, ambM, ambT, ambP, ambD, ambSP):
             proceed3, theta3, M3, T3, P3, D3, SP3 = solveShock(gamma, delta3, M2, T2, P2, D2, SP2)
             if proceed3 == True:
                 proceed4, theta4, M4, T4, P4, D4, SP4 = solveShock(gamma, delta4, M3, T3, P3, D3, SP3)
-                return theta4, M4, T4, P4, D4, SP4
+                deltas = (delta1, delta2, delta3, delta4)
+                thetas = (theta1, theta2, theta3, theta4)
+                pressures = (P1, P2, P3, P4)
+                return (theta4, M4, T4, P4, D4, SP4), (deltas, thetas, pressures)
             else:
-                return (0, 0, 0, 0, 0, 0)
+                return (0, 0, 0, 0, 0, 0), None
         else:
-            return (0, 0, 0, 0, 0, 0)
+            return (0, 0, 0, 0, 0, 0), None
     else:
-        return (0, 0, 0, 0, 0, 0)
+        return (0, 0, 0, 0, 0, 0), None
 
 nozzle.initNozzle()
     
@@ -252,7 +256,7 @@ machsList = []
 def solveMachRange_forConfig(config):
     for M in Mrange:
         alt, ambT, ambP, ambD, ambSoS, ambV, ambST, ambSP = ambient_from_MQ(M, Q, gamma)
-        configAtM = solveConfig(gamma, config, M, ambT, ambP, ambD, ambSP)
+        configAtM, dragTup = solveConfig(gamma, config, M, ambT, ambP, ambD, ambSP)
         print("----------------------------------------------------------------------------------------------------")
         print("Config:", config)
         print("Mach:", M)
@@ -298,24 +302,40 @@ def solveMachRange_forConfig(config):
                 print("Max thrust from heat addition (kN)", round(thrustFromHeatkN, 1))
                 inletV = (egg.SoS(gamma, 287, inletT)) * inletM
                 massFlow, maxHydrogen, IspLo = performance(inletD, inletV, inletM, inletT, thrustFromHeat)
-                unusedA, unusedB, IspHi = performance(inletD, inletV, inletM, inletT, thrusts[3])
                 print("Max hydrogen flow (kg/s):", round(maxHydrogen, 3))
                 print("Inlet mass flow (kg/m2/s):", round(massFlow, 3))
-                print("Lower Isp (s):", round(IspLo, 1))
-                print("Higher Isp (s):", round(IspHi, 1))
-                if temp1 <= temperatureLimit:
-                    print("PASS (combustor within temperature limit at 25%)")
-                    configAnalysis = [float(M), config, float(IspLo), float(quarterkN)]
-                    configsList.append(configAnalysis)
-                    machAnalysis = [config, float(M), float(IspLo), float(quarterkN)]
-                    machsList.append(machAnalysis)
-                elif temp1 > temperatureLimit:
-                    print("FAIL (combustor exceeds temperature limit even at 25%)")
+                if temp3 <= temperatureLimit:
+                    print("PASS (combustor within temperature limit)")
+                    lift, drag, length, height = geometry.solveDrag(dragTup[0], dragTup[1], dragTup[2])
+                    print("==========PERFORMANCE==========")
+                    excessThrust = thrusts[3] - drag
+                    excesskN = excessThrust / 1000
+                    liftkN = lift / 1000
+                    dragkN = drag / 1000
+                    lengthString = str("Dimensions (given a 1m x 1m inlet): " + str(round(length, 1)) + "m long (LE-inlet horiz), " + str(round(height, 1)) + "m tall (lip-LE vert)")
+                    dragString = str("Lift: " + str(round(liftkN, 1)) + "kN, Drag: " + str(round(dragkN, 1)) + "kN")
+                    print(lengthString)
+                    print(dragString)
+                    print("Excess thrust after drag at 100% (kN):", excesskN)
+                    massFlow, maxHydrogen, Isp = performance(inletD, inletV, inletM, inletT, excessThrust)
+                    print("Isp, just heat addition (s):", round(IspLo, 1))
+                    print("Isp, from excess thrust (s):", round(Isp, 1))
+                    if excessThrust > 0:
+                        print("PASS (produces thrust)")
+                        configAnalysis = [float(M), config, float(Isp), float(excesskN)]
+                        configsList.append(configAnalysis)
+                        machAnalysis = [config, float(M), float(Isp), float(excesskN)]
+                        machsList.append(machAnalysis)
+                    elif excessThrust <= 0:
+                        print("FAIL (does not produce thrust)")
+                    else:
+                        print("ERROR (performance)")
+                elif temp3 > temperatureLimit:
+                    print("FAIL (combustor exceeds temperature limit)")
                 else:
                     print("ERROR (combustor temperature)")
             except:
                 print("ERROR (combustor)")
-            #calcualte geometry and performance
         elif configAtM[0] < 0:
             debugPrint(configAtM)
             print("ERROR (intake)")
@@ -329,24 +349,18 @@ for config in ramp123range:
     solveMachRange_forConfig(config)
 
 configsList.sort()
-print("Successful configs, listed in Mach order, with Isp and 25% thrust:")
+print("Successful configs, listed in Mach order, with Isp and 100% thrust:")
 it = 0
 for x in configsList:
     it += 1
-    print(it, x)
+    print(it, "-", x)
 
 print()
-print("Successful configs in order, with Mach, Isp and 25% thrust:")
+print("Successful configs in order, with Mach, Isp and 100% thrust:")
 it = 0
 for x in machsList:
     it += 1
-    print(it, x)
-
-
-#i guess it works???!!
-
-    
-    
+    print(it, "-", x)
 
 ### PLOT AT THE END
 fig, (ax1, ax2, ax3) = plt.subplots(3)
