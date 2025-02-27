@@ -90,11 +90,7 @@ def radDetachment(M, gamma):
 #oblique - just going to use Kyle's code to get theta (shock angle)
 #radShock = kyle.obliqueShockTheta(Min, gamma, radDeflection)
 
-def obliqueMout(gamma, M, theta, delta):
-    machParam = ((gamma - 1) * M**2 * math.sin(theta)**2 + 2) / (2 * gamma * M**2 * math.sin(theta)**2 - (gamma - 1))
-    sinParam = math.sin(theta - delta)**2
-    Mout = math.sqrt(machParam / sinParam)
-    return Mout
+#obliqueMach is kyle's
 
 def obliqueTout_Tin(gamma, M, theta):
     Tout_Tin = ((2 * gamma * M**2 * math.sin(theta)**2 - (gamma - 1)) * ((gamma - 1) * M**2 * math.sin(theta)**2 + 2)) / ((gamma + 1)**2 * M**2 * math.sin(theta)**2)
@@ -147,3 +143,18 @@ def normalSPout_SPin(gamma, M):
     SPout_SPin = a**b * c**d
     return SPout_SPin
 
+### RAYLEIGH HEATING
+
+def rayleighFunc(M, gamma):
+    return ((1 + ((gamma - 1) / 2)*M**2)*M**2) / ((1 + gamma*M**2)**2)
+
+def getMachFromRF(RF, gamma):
+    subsonicM = list(np.round(np.arange(0.,1.,0.01), 3))
+    subsonicRF = [rayleighFunc(x, gamma) for x in subsonicM]
+    rayleighSubsonic = dict(zip(subsonicM, subsonicRF))
+    supersonicM = list(np.round(np.arange(1.,30.,0.01), 3))
+    supersonicRF = [rayleighFunc(x, gamma) for x in supersonicM]
+    rayleighSupersonic = dict(zip(supersonicM, supersonicRF))
+    sub_M, sub_RF = min(rayleighSubsonic.items(), key=lambda x: abs(RF - x[1]))
+    sup_M, sup_RF = min(rayleighSupersonic.items(), key=lambda x: abs(RF - x[1]))
+    return sub_M, sub_RF, sup_M, sup_RF
