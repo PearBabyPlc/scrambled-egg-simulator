@@ -9,9 +9,10 @@ import formulaegg as egg
 import itertools
 import nozzle
 import geometryDrag as geometry
+import scipy as sp
 
 ### DEFINE TEST CONDITIONS ###
-Mlo = 8
+Mlo = 4
 Mhi = 15 #if step = 1, it'll only go up to Mhi-1, keep in mind
 step = 0.1
 Q = 30000
@@ -20,7 +21,7 @@ R = 287
 Cp = 1005
 chamberA = 1
 expansionRatio = 15
-temperatureLimit = 5000
+temperatureLimit = 3600
 ### 
 
 def P_from_MQ(M, Q, gamma):
@@ -252,6 +253,10 @@ def debugPrint(debugThis):
 
 configsList = []
 machsList = []
+performanceX = []
+performanceY1 = []
+performanceY2 = []
+cHeatMap = []
 
 def solveMachRange_forConfig(config):
     for M in Mrange:
@@ -304,7 +309,7 @@ def solveMachRange_forConfig(config):
                 massFlow, maxHydrogen, IspLo = performance(inletD, inletV, inletM, inletT, thrustFromHeat)
                 print("Max hydrogen flow (kg/s):", round(maxHydrogen, 3))
                 print("Inlet mass flow (kg/m2/s):", round(massFlow, 3))
-                if temp3 <= temperatureLimit:
+                if temp4 <= temperatureLimit:
                     print("PASS (combustor within temperature limit)")
                     lift, drag, length, height = geometry.solveDrag(dragTup[0], dragTup[1], dragTup[2])
                     print("==========PERFORMANCE==========")
@@ -322,15 +327,19 @@ def solveMachRange_forConfig(config):
                     print("Isp, from excess thrust (s):", round(Isp, 1))
                     if excessThrust > 0:
                         print("PASS (produces thrust)")
-                        configAnalysis = [float(M), config, float(Isp), float(excesskN)]
+                        configAnalysis = [float(M), config, float(IspLo), float(excesskN)]
                         configsList.append(configAnalysis)
-                        machAnalysis = [config, float(M), float(Isp), float(excesskN)]
+                        machAnalysis = [config, float(M), float(IspLo), float(excesskN)]
                         machsList.append(machAnalysis)
+                        performanceX.append(M)
+                        performanceY1.append(IspLo)
+                        performanceY2.append(excesskN)
+                        cHeatMap.append(temp4)
                     elif excessThrust <= 0:
                         print("FAIL (does not produce thrust)")
                     else:
                         print("ERROR (performance)")
-                elif temp3 > temperatureLimit:
+                elif temp4 > temperatureLimit:
                     print("FAIL (combustor exceeds temperature limit)")
                 else:
                     print("ERROR (combustor temperature)")
@@ -363,11 +372,13 @@ for x in machsList:
     print(it, "-", x)
 
 ### PLOT AT THE END
-fig, (ax1, ax2, ax3) = plt.subplots(3)
-ax1.plot(Mrange, altRange, color='k')
-ax1.plot(Mrange, Prange, color='b')
-ax2.plot(Mrange, Trange, color='r')
-ax2.plot(Mrange, Drange, color='y')
-ax3.plot(Mrange, degDetachmentRange)
-plt.savefig("machQ_conditions.pdf")
+fig, (ax1, ax2) = plt.subplots(2)
+ax1.scatter(performanceX, performanceY1, c=cHeatMap)
+ax2.scatter(performanceX, performanceY2, c=cHeatMap)
+#ax1.plot(Mrange, altRange, color='k')
+#ax1.plot(Mrange, Prange, color='b')
+#ax2.plot(Mrange, Trange, color='r')
+#ax2.plot(Mrange, Drange, color='y')
+#ax3.plot(Mrange, degDetachmentRange)
+plt.savefig("Isp_Thrust_Mach.pdf")
 plt.show()
