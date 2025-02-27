@@ -35,3 +35,10 @@ def obliqueShockTheta(mach1, gamma, delta):
     theta = root.root
     return theta
 
+def obliqueMach(gamma, inputM, theta, delta):
+    mach_1n = inputM * np.sin(theta)
+    mach_2n = get_mach_normal(gamma, mach_1n)
+    return (
+        mach_2n / np.sin(theta - delta)
+        )
+
