@@ -1,4 +1,6 @@
 # Scrambled Egg Simulator v0.2 (Iterable Boogaloo)
+![Plot of specific impulse (s) and thrust (kN) for a theoretical highly variable geometry scramjet, from Mach 4-14. Dynamic pressure is 45kPa, brighter in the colour map means hotter combustion chamber temperatures.](https://github.com/PearBabyPlc/scrambled-egg-simulator/blob/main/v0.2/Isp_Thrust_Mach%2045kPa.png)
+_Plot of specific impulse (s) and thrust (kN) for a theoretical highly variable geometry scramjet, from Mach 4-14. Dynamic pressure is 45kPa, brighter in the colour map means hotter combustion chamber temperatures._
 
 ## About
 Scrambled Egg Simulator v0.2 is really only good for roughly estimating potential performance of a scramjet within a range of intake configs, and if you want to assess the performance of a single design your best bet is to try out v0.1 - which has helpful command line input prompts, unlike v0.2. This version also does not model ramjets, only scramjets with fully supersonic flow; it does not produce any visualisations of the intake geometries either.
