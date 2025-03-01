@@ -1,4 +1,6 @@
-How to use - define test conditions at near the top of [the main Python file:](https://github.com/PearBabyPlc/scrambled-egg-simulator/blob/main/v0.2/runModel.py)
+#Scrambled Egg Simulator v0.2 (Iterable Boogaloo)
+##How to use
+Define test conditions at near the top of [the main Python file:](https://github.com/PearBabyPlc/scrambled-egg-simulator/blob/main/v0.2/runModel.py)
 - Mlo, Mhi, step: mach range, for np.arange() creation
 - Q: dynamic pressure, to calculate a constant dynamic pressure altitude-Mach trajectory
 - gamma = 1.4 generally
@@ -16,11 +18,12 @@ After defining all necessary variables (don't touch any other ones), the program
 - Intake length within size limit
 - Overall model produces positive thrust with drag taken into consideration
 
+##About
 The pass/fail conditions aren't terribly well enforced, so expect lots of weird outliers in the final output plot. Scrambled Egg Simulator v0.2 is really only good for roughly estimating potential performance of a scramjet within a range of intake configs, and if you want to assess the performance of a single design your best bet is to try out v0.1 - which has helpful command line input prompts, unlike v0.2. This version also does not model ramjets, only scramjets with fully supersonic flow; it does not produce any visualisations of the intake geometries either.
 
 v0.3 will be split into several smaller models that will encompass the functionalities of both v0.1 and v0.2, as well as attempt to model the whole aircraft (dimensions, geometry, performance, practicality). In the meantime, good luck making sense of anything these two dozen YandereDev-nested-if-statements-in-a-trenchcoat manage to plot.
 
-Credit to the following:
+##Credits
 - The entire University of Queensland hypersonics Youtube channel (https://www.youtube.com/@uqxhypers301xhypersonics7)
 - BuzzerRookie for their ISA, used in this project as buzzerrookie_isa.py (https://gist.github.com/buzzerrookie/5b6438c603eabf13d07e)
 - Kyle Niemeyer's Gas Dynamics notes, used in this project as kyleniemeyer_gasdynamics.py (https://kyleniemeyer.github.io/gas-dynamics-notes/compressible-flows/oblique-shocks.html)
@@ -28,7 +31,7 @@ Credit to the following:
 
 CC BY-SA 4.0
 
-Structure:
+##Structure
 - runModel.py (Numerically solving for the best performance at a given Mach for a set of ramp angles)
 - buzzerrookie_isa.py (BuzzerRookie's International Standard Atmosphere calculator, with a few tweaks for my use)
 - kyleniemeyer_gasdynamics.py (Whenever my attempts at solving various aerodynamics problems fails, Kyle Niemeyer is there to help)
@@ -37,7 +40,7 @@ Structure:
 - geometryDrag.py (Calculates intake geometry and drag, for evaluation of practicality and performance (excess thrust, specific impulse)
 - unused.py (I have no idea)
 
-Import dependencies:
+##Dependencies
 - numpy
 - matplotlib
 - scipy
