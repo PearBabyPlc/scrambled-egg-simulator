@@ -23,6 +23,9 @@ chamberA = 1
 expansionRatio = 15
 temperatureLimit = 4100
 lengthLimit = 120.0
+ramp1range = (1, 2, 3, 4, 5)
+ramp2range = (6, 9, 12, 15, 18)
+ramp3range = (8, 12, 16, 20, 24)
 ### 
 
 def P_from_MQ(M, Q, gamma):
@@ -71,9 +74,6 @@ def detachmentAngle(M, gamma):
 degDetachmentRange = [detachmentAngle(x, gamma) for x in Mrange]
 
 #simple for now
-ramp1range = (1, 2, 3, 4, 5)
-ramp2range = (6, 9, 12, 15, 18)
-ramp3range = (8, 12, 16, 20, 24)
 rampCount = 3
 ramp123range = list(itertools.product(ramp1range, ramp2range, ramp3range))
 temporary = list((int(j) for i in ramp123range for j in i))
