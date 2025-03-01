@@ -15,6 +15,7 @@ After defining all necessary variables (don't touch any other ones), the program
 - Combustor temperature within limit at 99% of choked flow heat addition
 - Intake length within size limit
 - Overall model produces positive thrust with drag taken into consideration
+
 The pass/fail conditions aren't terribly well enforced, so expect lots of weird outliers in the final output plot. Scrambled Egg Simulator v0.2 is really only good for roughly estimating potential performance of a scramjet within a range of intake configs, and if you want to assess the performance of a single design your best bet is to try out v0.1 - which has helpful command line input prompts, unlike v0.2. This version also does not model ramjets, only scramjets with fully supersonic flow; it does not produce any visualisations of the intake geometries either.
 
 v0.3 will be split into several smaller models that will encompass the functionalities of both v0.1 and v0.2, as well as attempt to model the whole aircraft (dimensions, geometry, performance, practicality). In the meantime, good luck making sense of anything these two dozen YandereDev-nested-if-statements-in-a-trenchcoat manage to plot.
