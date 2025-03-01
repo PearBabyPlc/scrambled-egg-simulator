@@ -3,7 +3,12 @@ Scrambled Egg Simulator is a foolhardy attempt at modelling hypersonic flight - 
 - [v0.1 is for assessing the performance of a single ram/scramjet design for a single set of conditions:](https://github.com/PearBabyPlc/scrambled-egg-simulator/tree/main/v0.1) it creates a nice intake geometry plot, and gives you vague performance values.
 - [v0.2 is for roughly estimating performance of only scramjets (not ramjets) within a range of intake ramp angle configs:](https://github.com/PearBabyPlc/scrambled-egg-simulator/tree/main/v0.2) it iterates through the configs for a defined Mach range and dynamic pressure, and outputs a plot of performance indicators (specific impulse and excess thrust), as well as a bunch of other values in the churning command line (which may have thousands of entries)
 
-Accreditations in the readme.md in each version folder.
+## Credits
+- The entire University of Queensland hypersonics Youtube channel (https://www.youtube.com/@uqxhypers301xhypersonics7)
+- BuzzerRookie for their ISA, used in this project as buzzerrookie_isa.py (https://gist.github.com/buzzerrookie/5b6438c603eabf13d07e)
+- Kyle Niemeyer's Gas Dynamics notes, used in this project as kyleniemeyer_gasdynamics.py (https://kyleniemeyer.github.io/gas-dynamics-notes/compressible-flows/oblique-shocks.html)
+- The NASA Glenn Research Centre (mainly https://www.grc.nasa.gov/www/k-12/airplane/index.html)
+
 CC BY-SA 4.0
 
 ## Examples 
