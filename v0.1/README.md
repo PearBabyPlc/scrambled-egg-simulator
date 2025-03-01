@@ -1,4 +1,8 @@
-# scrambled-egg-simulator
+# Scrambled Egg Simulator v0.1
+
+![Intake geometry for a ramjet at 30km, Mach 6, and ramp deflection angles of 3, 10 and 12 degrees](https://github.com/PearBabyPlc/scrambled-egg-simulator/blob/main/v0.1/intakeGeometry-30km-M6-3-10-12.png)
+* Intake geometry for a ramjet at 30km, Mach 6, and ramp deflection angles of 3, 10 and 12 degrees *
+
 A variety of calculators and tools for the analysis of hypersonic aerodynamics, propulsion and rocketry. The end goal is to create a complete model of a waverider spaceplane.
 
 [Run this file from the command line to use](https://github.com/PearBabyPlc/scrambled-egg-simulator/blob/main/v0.1/ScrambledEggSimulator-0-1.py)
