@@ -1,10 +1,11 @@
 Structure:
-- inputhelper.py (my own silly little io thing with Yandere Dev tier if statements)
+- runModel.py (Numerically solving for the best performance at a given Mach for a set of ramp angles)
 - buzzerrookie_isa.py (BuzzerRookie's International Standard Atmosphere calculator, with a few tweaks for my use)
 - kyleniemeyer_gasdynamics.py (Whenever my attempts at solving various aerodynamics problems fails, Kyle Niemeyer is there to help)
 - formulaegg.py (Random equations and shit that other bits of code can use for science)
-- runModel.py (Numerically solving for the best performance at a given Mach for a set of ramp angles)
-- probably more to come...
+- nozzle.py (Rayleigh flow de Laval nozzle solver for estimation)
+- geometryDrag.py (Calculates intake geometry and drag, for evaluation of practicality and performance (excess thrust, specific impulse)
+- unused.py (I have no idea)
 
 Credit to the following:
 - The entire University of Queensland hypersonics Youtube channel (https://www.youtube.com/@uqxhypers301xhypersonics7)
