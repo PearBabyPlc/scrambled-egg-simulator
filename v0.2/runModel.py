@@ -21,7 +21,8 @@ R = 287
 Cp = 1005
 chamberA = 1
 expansionRatio = 15
-temperatureLimit = 3600
+temperatureLimit = 4100
+lengthLimit = 120.0
 ### 
 
 def P_from_MQ(M, Q, gamma):
@@ -60,8 +61,6 @@ def ambient_from_MQ(M, Q, gamma):
     ambSP = (1 / (egg.P_sP(gamma, M))) * ambP
     return alt, ambT, ambP, ambD, ambSoS, ambV, ambST, ambSP
 
-alt, ambT, ambP, ambD, ambSoS, ambV, ambST, ambSP = ambient_from_MQ(10, Q, 1.4)
-
 ### DEF TEST GEOMETRY ###
 # something something detachment angle
 
@@ -72,9 +71,9 @@ def detachmentAngle(M, gamma):
 degDetachmentRange = [detachmentAngle(x, gamma) for x in Mrange]
 
 #simple for now
-ramp1range = (2, 3, 4, 5)
-ramp2range = (4, 6, 8, 10)
-ramp3range = (10, 14, 18, 22)
+ramp1range = (1, 2, 3, 4, 5)
+ramp2range = (6, 9, 12, 15, 18)
+ramp3range = (8, 12, 16, 20, 24)
 rampCount = 3
 ramp123range = list(itertools.product(ramp1range, ramp2range, ramp3range))
 temporary = list((int(j) for i in ramp123range for j in i))
@@ -312,33 +311,39 @@ def solveMachRange_forConfig(config):
                 if temp4 <= temperatureLimit:
                     print("PASS (combustor within temperature limit)")
                     lift, drag, length, height = geometry.solveDrag(dragTup[0], dragTup[1], dragTup[2])
-                    print("==========PERFORMANCE==========")
-                    excessThrust = thrusts[3] - drag
-                    excesskN = excessThrust / 1000
-                    liftkN = lift / 1000
-                    dragkN = drag / 1000
-                    lengthString = str("Dimensions (given a 1m x 1m inlet): " + str(round(length, 1)) + "m long (LE-inlet horiz), " + str(round(height, 1)) + "m tall (lip-LE vert)")
-                    dragString = str("Lift: " + str(round(liftkN, 1)) + "kN, Drag: " + str(round(dragkN, 1)) + "kN")
-                    print(lengthString)
-                    print(dragString)
-                    print("Excess thrust after drag at 100% (kN):", excesskN)
-                    massFlow, maxHydrogen, Isp = performance(inletD, inletV, inletM, inletT, excessThrust)
-                    print("Isp, just heat addition (s):", round(IspLo, 1))
-                    print("Isp, from excess thrust (s):", round(Isp, 1))
-                    if excessThrust > 0:
-                        print("PASS (produces thrust)")
-                        configAnalysis = [float(M), config, float(IspLo), float(excesskN)]
-                        configsList.append(configAnalysis)
-                        machAnalysis = [config, float(M), float(IspLo), float(excesskN)]
-                        machsList.append(machAnalysis)
-                        performanceX.append(M)
-                        performanceY1.append(IspLo)
-                        performanceY2.append(excesskN)
-                        cHeatMap.append(temp4)
-                    elif excessThrust <= 0:
-                        print("FAIL (does not produce thrust)")
+                    if length <= lengthLimit:
+                        print("PASS (intake within size limit)")
+                        print("==========PERFORMANCE==========")
+                        excessThrust = thrusts[3] - drag
+                        excesskN = excessThrust / 1000
+                        liftkN = lift / 1000
+                        dragkN = drag / 1000
+                        lengthString = str("Dimensions (given a 1m x 1m inlet): " + str(round(length, 1)) + "m long (LE-inlet horiz), " + str(round(height, 1)) + "m tall (lip-LE vert)")
+                        dragString = str("Lift: " + str(round(liftkN, 1)) + "kN, Drag: " + str(round(dragkN, 1)) + "kN")
+                        print(lengthString)
+                        print(dragString)
+                        print("Excess thrust after drag at 100% (kN):", excesskN)
+                        massFlow, maxHydrogen, Isp = performance(inletD, inletV, inletM, inletT, excessThrust)
+                        print("Isp, just heat addition (s):", round(IspLo, 1))
+                        print("Isp, from excess thrust (s):", round(Isp, 1))
+                        if excessThrust > 0:
+                            print("PASS (produces thrust)")
+                            configAnalysis = [float(M), config, float(IspLo), float(excesskN)]
+                            configsList.append(configAnalysis)
+                            machAnalysis = [config, float(M), float(IspLo), float(excesskN)]
+                            machsList.append(machAnalysis)
+                            performanceX.append(M)
+                            performanceY1.append(IspLo)
+                            performanceY2.append(excesskN)
+                            cHeatMap.append(temp4)
+                        elif excessThrust <= 0:
+                            print("FAIL (does not produce thrust)")
+                        else:
+                            print("ERROR (performance)")
+                    elif length > lengthLimit:
+                        print("FAIL (intake exceeds size limit)")
                     else:
-                        print("ERROR (performance)")
+                        print("ERROR (intake size)")
                 elif temp4 > temperatureLimit:
                     print("FAIL (combustor exceeds temperature limit)")
                 else:
