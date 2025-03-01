@@ -36,3 +36,9 @@ Structure:
 - nozzle.py (Rayleigh flow de Laval nozzle solver for estimation)
 - geometryDrag.py (Calculates intake geometry and drag, for evaluation of practicality and performance (excess thrust, specific impulse)
 - unused.py (I have no idea)
+
+Import dependencies:
+- numpy
+- matplotlib
+- scipy
+- (built-in modules: math, itertools)
