@@ -22,8 +22,8 @@ v0.3 will be split into several smaller models that will encompass the functiona
 
 Credit to the following:
 - The entire University of Queensland hypersonics Youtube channel (https://www.youtube.com/@uqxhypers301xhypersonics7)
-- BuzzerRookie for their ISA, used in this project as buzzerrookieisa.py (https://gist.github.com/buzzerrookie/5b6438c603eabf13d07e)
-- Kyle Niemeyer's Gas Dynamics notes, used in this project as kylesObliqueShocks.py and maybe an additional Prandlt-Meyer thingy (https://kyleniemeyer.github.io/gas-dynamics-notes/compressible-flows/oblique-shocks.html)
+- BuzzerRookie for their ISA, used in this project as buzzerrookie_isa.py (https://gist.github.com/buzzerrookie/5b6438c603eabf13d07e)
+- Kyle Niemeyer's Gas Dynamics notes, used in this project as kyleniemeyer_gasdynamics.py (https://kyleniemeyer.github.io/gas-dynamics-notes/compressible-flows/oblique-shocks.html)
 - The NASA Glenn Research Centre (mainly https://www.grc.nasa.gov/www/k-12/airplane/index.html)
 
 CC BY-SA 4.0
