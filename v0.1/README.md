@@ -14,6 +14,8 @@ There is no rhyme or reason to the structuring of the files - they're just what 
 - Exhaust ramp analysis, instead of the current de Laval nozzle approximation
 - Intake drag analysis, for performance stats (Isp, thrust, etc...)
 
+[Anyway, here's the next version. It does something different and arguably less effectively, but if you want a plot of performance against Mach number, it's your program.](https://github.com/PearBabyPlc/scrambled-egg-simulator/tree/main/v0.2)
+
 Credit to the following:
 - The entire University of Queensland hypersonics Youtube channel (https://www.youtube.com/@uqxhypers301xhypersonics7)
 - BuzzerRookie for their ISA, used in this project as buzzerrookieisa.py (https://gist.github.com/buzzerrookie/5b6438c603eabf13d07e)
