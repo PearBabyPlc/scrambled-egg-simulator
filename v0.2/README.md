@@ -1,4 +1,4 @@
-How to use - define test conditions:
+How to use - define test conditions at near the top of [the main Python file:](https://github.com/PearBabyPlc/scrambled-egg-simulator/blob/main/v0.2/runModel.py)
 - Mlo, Mhi, step: mach range, for np.arange() creation
 - Q: dynamic pressure, to calculate a constant dynamic pressure altitude-Mach trajectory
 - gamma = 1.4 generally
