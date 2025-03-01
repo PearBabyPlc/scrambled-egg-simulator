@@ -10,7 +10,7 @@ How to use - define test conditions:
 - lengthLimit: maximum allowable intake length from inlet to leading edge of the aircraft, remember that this is relative to the inlet area (set at 1m2, dimensions of 1x1 metres)
 - ramp1range, ramp2range, ramp3range: tuple containing the ranges of angles for each ramp, itertools is used to create a list of all possible intake ramp angle configs, current bug means all tuples must contain the same number of values or else it can't iterate
 
-After defining all necessary variables (don't touch any other ones), the program will chug along in the command line. Each subsequent model result cascades into either a pass or fail for the config. All of the following conditions have to be met for the model to pass:
+After defining all necessary variables (don't touch any other ones), the program will chug along in the command line. Each subsequent model component result cascades into what should ultimately be either a pass or fail for the config. All of the following conditions have to be met for the model to pass:
 - Inlet Mach number above 1.0
 - Combustor temperature within limit at 99% of choked flow heat addition
 - Intake length within size limit
