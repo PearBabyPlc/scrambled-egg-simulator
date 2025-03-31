@@ -1,1 +1,3 @@
-An approximate model of real Rayleigh/nozzle flow. quamber.py demos a hydrolox combustion chamber, and quazzle.py demos a diverging scramjet nozzle.
+An approximate model of real Rayleigh/nozzle flow.
+![Quamber](https://github.com/PearBabyPlc/scrambled-egg-simulator/blob/main/quengine/quamber.png)
+![Quazzle](https://github.com/PearBabyPlc/scrambled-egg-simulator/blob/main/quengine/quazzle.png)
