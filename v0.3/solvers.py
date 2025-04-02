@@ -145,47 +145,46 @@ def solveIntake(condIn, config, perfTup):
 def quasiHeating(condIn, perfTup, steamTup, fuelTup, LHV, maxT):
     return 0
 
-#not good, roughGam and testGam diverge with iteration
-def shittyHeating(condIn, perfTup, maxT):
+def rayleighRelations(perfTup, M, gam):
+    P_Pch = egg.idealP_Pch(gam, M)
+    T_Tch = egg.idealT_Tch(gam, M)
+    D_Dch = egg.idealD_Dch(gam, M)
+    SP_SPch = egg.idealSP_SPch(gam, M)
+    ST_STch = egg.idealST_STch(gam, M)
+    return (P_Pch, T_Tch, D_Dch, SP_SPch, ST_STch)
+
+def basicHeating(condIn, perfTup, maxT):
     Min = condIn[0]
-    MarangeReversed = np.round(np.arange(1.,Min,0.01), 6)
-    Marange = MarangeReversed[::-1]
-    testCondRange = []
+    Tin = condIn[2]
+    Marange = np.round(np.arange(1.,Min,0.001), 6)
     Trange = []
+    MgamRange = []
+    gamA = egg.realGamma(perfTup[0], Tin)
+    T_TchA = egg.idealT_Tch(gamA, Min)
+    TchA = Tin / T_TchA
     for x in Marange:
-        roughGam = egg.quasiRayleighGamma(condIn[8], perfTup[0], x, maxT)
-        roughT_Tch = egg.idealT_Tch(roughGam, x)
-        roughT = condIn[2] / roughT_Tch
-        testGam = egg.realGamma(perfTup[0], roughT)
-        testT_Tch = egg.idealT_Tch(testGam, x)
-        testT = condIn[2] / testT_Tch
-        testP_Pch = egg.idealP_Pch(testGam, x)
-        testP = condIn[1] / testP_Pch
-        testD_Dch = egg.idealD_Dch(testGam, x)
-        testD = condIn[3] / testD_Dch
-        testSP_SPch = egg.idealSP_SPch(testGam, x)
-        testSP = condIn[4] / testSP_SPch
-        testST_STch = egg.idealST_STch(testGam, x)
-        testST = condIn[5] / testST_STch
-        Trange.append(testT)
-        testCond = (x, testP, testT, testD, testSP, testST, testGam)
-        testCondRange.append(testCond)
-    testCondDict = dict(zip(testCondRange, Trange))
-    approxCond, bpproxT = min(testCondDict.items(), key=lambda x:abs(maxT - x[1]))
-    Mout = approxCond[0]
-    Pout = approxCond[1]
-    Tout = approxCond[2]
-    Dout = approxCond[3]
-    SPout = approxCond[4]
-    STout = approxCond[5]
-    SoSout = egg.idealSoS(approxCond[6], perfTup[2], Tout)
+        T_TchB = egg.idealT_Tch(gamA, x)
+        TB = T_TchB * TchA
+        TchB = TB / T_TchB
+        gamB = egg.realGamma(perfTup[0], TB)
+        Mgam = (x, gamB)
+        MgamRange.append(Mgam)
+        print("M =", x, "| gam =", gamB, "| T =", TB, "| Tch =", TchB)
+        Trange.append(TB)
+    Tdict = dict(zip(MgamRange, Trange))
+    MgamOut, Tout = min(Tdict.items(), key=lambda x:abs(maxT - x[1]))
+    Mout = MgamOut[0]
+    gamOut = MgamOut[1]
+    rayleighTup = rayleighRelations(perfTup, Mout, gamOut)
+    Pout = condIn[2] / rayleighTup[1]
+    Dout = condIn[3] / rayleighTup[2]
+    SPout = condIn[4] / rayleighTup[3]
+    STout = condIn[5] / rayleighTup[4]
+    SoSout = egg.idealSoS(gamOut, perfTup[2], Tout)
     Vout = Mout * SoSout
-    gammaOut = approxCond[6]
     CpOut = egg.realCp(perfTup[0], perfTup[1], Tout)
-    RsOut = perfTup[2]
-    molOut = perfTup[3]
-    condOut = (Mout, Pout, Tout, Dout, SPout, STout, SoSout, Vout, gammaOut, CpOut, RsOut, molOut)
+    RsOut = condIn[10]
+    molOut = condIn[11]
+    condOut = (Mout, Pout, Tout, Dout, SPout, STout, SoSout, Vout, gamOut, CpOut, RsOut, molOut)
     qOut = CpOut * (STout - condIn[5])
     return condOut, qOut
-    
-    
