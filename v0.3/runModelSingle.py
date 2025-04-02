@@ -59,6 +59,7 @@ fuelTup = (gammaH, CpH, RsH, molH)
 solve.printCond("Ambient (0):", cond0)
 print("Altitude:", estAlt, "metres")
 
+#iIntake oblique shock cascade
 print()
 intakePass, conds, thetas = solve.solveIntake(cond0, config, perfTup)
 cond1 = conds[0]
@@ -66,13 +67,11 @@ cond2 = conds[1]
 cond3 = conds[2]
 cond4 = conds[3]
 
+#Rayleigh flow combustion
 print()
-cond5, q = solve.shittyHeating(cond4, perfTup, maxTemp)
+cond5, q = solve.basicHeating(cond4, perfTup, maxTemp)
 print("Heat addition (J/kg):", q)
 solve.printCond("Post-combustion (5):", cond5)
 
-#Rayleigh flow solver (not taking into account change in composition yet
-
-#Diverging nozzle solver
-
-#Performance (thrust, Isp, drag, yada)
+#TODO Diverging nozzle 
+#TODO Performance (thrust, Isp, drag, yada)
