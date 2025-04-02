@@ -176,7 +176,7 @@ def basicHeating(condIn, perfTup, maxT):
     Mout = MgamOut[0]
     gamOut = MgamOut[1]
     rayleighTup = rayleighRelations(perfTup, Mout, gamOut)
-    Pout = condIn[2] / rayleighTup[1]
+    Pout = condIn[1] / rayleighTup[0]
     Dout = condIn[3] / rayleighTup[2]
     SPout = condIn[4] / rayleighTup[3]
     STout = condIn[5] / rayleighTup[4]
@@ -188,3 +188,48 @@ def basicHeating(condIn, perfTup, maxT):
     condOut = (Mout, Pout, Tout, Dout, SPout, STout, SoSout, Vout, gamOut, CpOut, RsOut, molOut)
     qOut = CpOut * (STout - condIn[5])
     return condOut, qOut
+
+def shitQuasiDivNozzle(condIn, perfTup, expansionRatio):
+    Min = condIn[0]
+    gamIn = condIn[8]
+    STin = condIn[5]
+    T_STin = condIn[2] / STin
+    SDin = condIn[3] / egg.realD_SD(perfTup[0], T_STin, condIn[2])
+    Marange = np.round(np.arange(Min,5.,0.2), 6)
+    Mrange = []
+    Arange = []
+    condRange = []
+    aGam = egg.quasiNozzleGamma(gamIn, perfTup[0], Min, STin)
+    aAch = egg.idealA_Ach(aGam, Min)
+    aSP = egg.idealP_SP(aGam, Min)
+    aST = egg.idealT_ST(aGam, Min)
+    aSD = egg.idealD_SD(aGam, Min)
+    aP = condIn[1] / (aSP * condIn[4])
+    aT = condIn[2] / (aST * STin)
+    aD = condIn[3] / (aSD * SDin)
+    print("Inlet A/Ach:", aAch)
+    for x in Marange:
+        testGam = egg.quasiNozzleGamma(gamIn, perfTup[0], x, STin)
+        testA_Ach = egg.idealA_Ach(testGam, x)
+        testP_SP = egg.idealP_SP(testGam, x)
+        testT_ST = egg.idealT_ST(testGam, x)
+        testD_SD = egg.idealD_SD(testGam, x)
+        testP = testP_SP * condIn[4] * aP
+        testT = testT_ST * STin * aT
+        testD = testD_SD * SDin * aD
+        testSoS = egg.idealSoS(testGam, perfTup[2], testT)
+        testV = testSoS * x
+        testCp = egg.realCp(perfTup[0], perfTup[1], testT)
+        testCond = (x, testP, testT, testD, condIn[4], condIn[5], testSoS, testV, testGam, testCp, perfTup[2], perfTup[3])
+        Mrange.append(x)
+        Arange.append(testA_Ach)
+        condRange.append(testCond)
+        expRbtio = testA_Ach / aAch
+        print("M:", x, "| ExpR:", expRbtio, "| V:", testV, "| P:", testP, "| T:", testT, "| D:", testD, "| gam:", testGam)
+    Adict = dict(zip(Arange, Mrange))
+    condDict = dict(zip(condRange, Arange))
+    proxA, proxM = min(Adict.items(), key=lambda x:abs(Min - x[1]))
+    Aratio = proxA * expansionRatio
+    condOut, Aout = min(condDict.items(), key=lambda x:abs(Aratio - x[1]))
+    return condOut
+        
