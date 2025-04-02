@@ -73,5 +73,9 @@ cond5, q = solve.basicHeating(cond4, perfTup, maxTemp)
 print("Heat addition (J/kg):", q)
 solve.printCond("Post-combustion (5):", cond5)
 
-#TODO Diverging nozzle 
+#Diverging nozzle
+print()
+cond6 = solve.shitQuasiDivNozzle(cond5, perfTup, expansionRatio)
+solve.printCond("Nozzle exit (6):", cond6)
+
 #TODO Performance (thrust, Isp, drag, yada)
