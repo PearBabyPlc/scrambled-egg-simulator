@@ -1,7 +1,10 @@
 import math
-import formulaegg as egg
-import buzzerrookie_isa as isa
 import numpy as np
+import buzzerrookie_isa as isa
+import formulaegg as egg
+import geometryDrag as geom
+
+g = 9.81
 
 def printCond(condString, cond):
     print(condString)
@@ -99,21 +102,22 @@ def solveIntake(condIn, config, perfTup):
     delta2 = math.radians(config[1])
     delta3 = math.radians(config[2])
     delta4 = delta1 + delta2 + delta3
+    deltas = (delta1, delta2, delta3, delta4)
     shock1, cond1, theta1 = solveShock(condIn, delta1, perfTup)
-    printAngle("Theta1:", theta1)
-    printCond("Cond1:", cond1)
+    #printAngle("Theta1:", theta1)
+    #printCond("Cond1:", cond1)
     if shock1 == "O":
         shock2, cond2, theta2 = solveShock(cond1, delta2, perfTup)
-        printAngle("Theta2:", theta2)
-        printCond("Cond2:", cond2)
+        #printAngle("Theta2:", theta2)
+        #printCond("Cond2:", cond2)
         if shock2 == "O":
             shock3, cond3, theta3 = solveShock(cond2, delta3, perfTup)
-            printAngle("Theta3:", theta3)
-            printCond("Cond3:", cond3)
+            #printAngle("Theta3:", theta3)
+            #printCond("Cond3:", cond3)
             if shock3 == "O":
                 shock4, cond4, theta4 = solveShock(cond3, delta4, perfTup)
-                printAngle("Theta4:", theta4)
-                printCond("Cond4:", cond4)
+                #printAngle("Theta4:", theta4)
+                #printCond("Cond4:", cond4)
                 if shock4 == "O":
                     conds = (cond1, cond2, cond3, cond4)
                     thetas = (theta1, theta2, theta3, theta4)
@@ -138,7 +142,7 @@ def solveIntake(condIn, config, perfTup):
         thetas = (theta1)
         intakePass = False
         print("Fail at shock 1")
-    return intakePass, conds, thetas
+    return intakePass, conds, thetas, deltas
 
 #condOut = (Mout, Pout, Tout, Dout, SPout, STout, SoSout, Vout, gammaOut, CpOut, RsOut, molOut)
 
@@ -151,12 +155,14 @@ def rayleighRelations(perfTup, M, gam):
     D_Dch = egg.idealD_Dch(gam, M)
     SP_SPch = egg.idealSP_SPch(gam, M)
     ST_STch = egg.idealST_STch(gam, M)
-    return (P_Pch, T_Tch, D_Dch, SP_SPch, ST_STch)
+    return P_Pch, T_Tch, D_Dch, SP_SPch, ST_STch
 
 def basicHeating(condIn, perfTup, maxT):
     Min = condIn[0]
     Tin = condIn[2]
-    Marange = np.round(np.arange(1.,Min,0.001), 6)
+    print("Min =", Min)
+    MarangeReversed = np.round(np.arange(1.001,Min,0.001), 6)
+    Marange = MarangeReversed[::-1]
     Trange = []
     MgamRange = []
     gamA = egg.realGamma(perfTup[0], Tin)
@@ -169,17 +175,26 @@ def basicHeating(condIn, perfTup, maxT):
         gamB = egg.realGamma(perfTup[0], TB)
         Mgam = (x, gamB)
         MgamRange.append(Mgam)
-        print("M =", x, "| gam =", gamB, "| T =", TB, "| Tch =", TchB)
+        #debugV = x * egg.idealSoS(gamB, perfTup[2], TB)
+        #debugD = condIn[3] / egg.idealD_Dch(gamB, x)
+        #debugFlow = debugV * debugD
+        #print("M =", x, "| gam =", gamB, "| T =", TB, "| massFlow =", debugFlow)
         Trange.append(TB)
     Tdict = dict(zip(MgamRange, Trange))
     MgamOut, Tout = min(Tdict.items(), key=lambda x:abs(maxT - x[1]))
+    print("Mout =", MgamOut)
     Mout = MgamOut[0]
     gamOut = MgamOut[1]
-    rayleighTup = rayleighRelations(perfTup, Mout, gamOut)
-    Pout = condIn[1] / rayleighTup[0]
-    Dout = condIn[3] / rayleighTup[2]
-    SPout = condIn[4] / rayleighTup[3]
-    STout = condIn[5] / rayleighTup[4]
+    rayleighTupIn = rayleighRelations(perfTup, Min, gamA)
+    rayleighTupOut = rayleighRelations(perfTup, Mout, gamOut)
+    inPr, inTr, inDr, inSPr, inSTr = rayleighRelations(perfTup, Min, gamA)
+    ouPr, ouTr, ouDr, ouSPr, ouSTr = rayleighRelations(perfTup, Mout, gamOut)
+    Pout = (condIn[1] / inPr) * ouPr
+    Dout = (condIn[3] / inDr) * ouDr
+    SPout = (condIn[4] / inSPr) * ouSPr
+    STout = (condIn[5] / inSTr) * ouSTr
+    print("Tout =", Tout)
+    print("STout =", STout)
     SoSout = egg.idealSoS(gamOut, perfTup[2], Tout)
     Vout = Mout * SoSout
     CpOut = egg.realCp(perfTup[0], perfTup[1], Tout)
@@ -187,6 +202,7 @@ def basicHeating(condIn, perfTup, maxT):
     molOut = condIn[11]
     condOut = (Mout, Pout, Tout, Dout, SPout, STout, SoSout, Vout, gamOut, CpOut, RsOut, molOut)
     qOut = CpOut * (STout - condIn[5])
+    print(CpOut, "x (", STout, "-", condIn[5], ") =", qOut)
     return condOut, qOut
 
 def shitQuasiDivNozzle(condIn, perfTup, expansionRatio):
@@ -195,7 +211,7 @@ def shitQuasiDivNozzle(condIn, perfTup, expansionRatio):
     STin = condIn[5]
     T_STin = condIn[2] / STin
     SDin = condIn[3] / egg.realD_SD(perfTup[0], T_STin, condIn[2])
-    Marange = np.round(np.arange(Min,5.,0.2), 6)
+    Marange = np.round(np.arange(Min,6.,0.001), 6)
     Mrange = []
     Arange = []
     condRange = []
@@ -207,7 +223,7 @@ def shitQuasiDivNozzle(condIn, perfTup, expansionRatio):
     aP = condIn[1] / (aSP * condIn[4])
     aT = condIn[2] / (aST * STin)
     aD = condIn[3] / (aSD * SDin)
-    print("Inlet A/Ach:", aAch)
+    #print("Inlet A/Ach:", aAch)
     for x in Marange:
         testGam = egg.quasiNozzleGamma(gamIn, perfTup[0], x, STin)
         testA_Ach = egg.idealA_Ach(testGam, x)
@@ -225,11 +241,80 @@ def shitQuasiDivNozzle(condIn, perfTup, expansionRatio):
         Arange.append(testA_Ach)
         condRange.append(testCond)
         expRbtio = testA_Ach / aAch
-        print("M:", x, "| ExpR:", expRbtio, "| V:", testV, "| P:", testP, "| T:", testT, "| D:", testD, "| gam:", testGam)
+        #print("M:", x, "| ExpR:", expRbtio, "| V:", testV, "| P:", testP, "| T:", testT, "| D:", testD, "| gam:", testGam)
     Adict = dict(zip(Arange, Mrange))
     condDict = dict(zip(condRange, Arange))
     proxA, proxM = min(Adict.items(), key=lambda x:abs(Min - x[1]))
     Aratio = proxA * expansionRatio
     condOut, Aout = min(condDict.items(), key=lambda x:abs(Aratio - x[1]))
-    return condOut
+    actualAratio = Aout / proxA
+    #print("Actual area ratio:", actualAratio)
+    return condOut, actualAratio
+
+def performance(conds, areaOut, deltas, thetas, LHV, q):
+    print("q =", q)
+    condAmb = conds[0]
+    cond1 = conds[1]
+    cond2 = conds[2]
+    cond3 = conds[3]
+    condInlet = conds[4]
+    condOut = conds[6]
+    ambientP = condAmb[1]
+    Din = condInlet[3]
+    Vin = condInlet[7]
+    Ain = 1
+    massIn = Din * Vin * Ain
+    condMid = conds[5]
+    massMid = condMid[3] * condMid[7] * Ain
+    #print(Din, Vin, massIn)
+    #print(condMid[3], condMid[7], massMid)
+    Dout = condOut[3]
+    Vout = condOut[7]
+    massOut = Dout * Vout * areaOut
+    #print(Dout, Vout, massOut)
+    newtonianThrust = (massIn * condOut[7]) - (massIn * condInlet[7])
+    pressureThrust = (condOut[1] - ambientP) * areaOut
+    totalThrust = newtonianThrust + pressureThrust
+    fuelFlow = (q / LHV) * massOut
+    pressures = (cond1[1], cond2[1], cond3[1])
+    lift, drag, length, height = geom.solveDrag(deltas, thetas, pressures)
+    #print("drag", drag)
+    excessThrust = totalThrust - drag
+    Isp = (1 / (g * fuelFlow)) * excessThrust
+    print("Mass in:", massIn)
+    print("Mass mid:", massMid)
+    print("Mass out:", massOut)
+    burger = (1.4, 1005, 287, 28.97)
+    print("CondInlet:", condInlet)
+    zeroFuelThrust(condInlet, burger, 15, drag, ambientP)
+    return excessThrust, fuelFlow, Isp, drag, length, height
+
+def zeroFuelThrust(condInlet, perfTup, expansionRatio, drag, ambientP):
+    condOut, areaOut = shitQuasiDivNozzle(condInlet, perfTup, expansionRatio)
+    massIn = condInlet[3] * condInlet[7] * 1
+    newtonianThrust = (massIn * condOut[7]) - (massIn * condInlet[7])
+    pressureThrust = (condOut[1] - ambientP)
+    zeroFuelThrust = (newtonianThrust + pressureThrust) - drag
+    print("Zero fuel Vin:", condInlet[7])
+    print("Zero fuel Vout:", condOut[7])
+    print("Zero fuel mflow:", massIn)
+    print("Zero fuel thrust:", zeroFuelThrust)
+    return None
+
+def initAmbient(gamma, Mlo, Mhi, Mstep, Q):
+    Mrange = np.round(np.arange(Mlo,Mhi,Mstep), 6)
+    altRange = np.linspace(0, 47000, num=47000)
+    Prange = [isa.Pisa(x) for x in altRange]
+    PaltDict = dict(zip(altRange, Prange))
+    ambientRange = []
+    for m in Mrange:
+        P = egg.idealPfromMQ(gamma, m, Q)
+        estAlt, estP = min(PaltDict.items(), key=lambda x: abs(P - x[1]))
+        temp, pres, dens = isa.isa(estAlt)
+        condAmb = (temp, pres, dens)
+        dynamicP = egg.idealQ(gamma, m, pres)
+        ambientTup = (m, estAlt, condAmb, dynamicP)
+        ambientRange.append(ambientTup)
+    return ambientRange
+    
         
