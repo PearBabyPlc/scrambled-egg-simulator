@@ -1,5 +1,18 @@
 import math
 import numpy as np
+import buzzerrookie_isa as isa
+
+def Palt(gamma, M, Q):
+    P = (1 / ((gamma / 2) * M**2)) * Q
+    altRange = np.linspace(0, 47000, num=47000)
+    Prange = [isa.Pisa(x) for x in altRange]
+    PaltDict = dict(zip(altRange, Prange))
+    estAlt, estP = min(PaltDict.items(), key=lambda x: abs(P - x[1]))
+    return estAlt
+
+def idealPfromMQ(gamma, M, Q):
+    P = (1 / ((gamma / 2) * M**2)) * Q
+    return P
 
 Theta = 3055 + (5 / 9)
 
