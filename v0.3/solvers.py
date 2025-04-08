@@ -160,7 +160,7 @@ def rayleighRelations(perfTup, M, gam):
 def basicHeating(condIn, perfTup, maxT):
     Min = condIn[0]
     Tin = condIn[2]
-    print("Min =", Min)
+    #print("Inlet Mach, gamma:", Min, condIn[8])
     MarangeReversed = np.round(np.arange(1.001,Min,0.001), 6)
     Marange = MarangeReversed[::-1]
     Trange = []
@@ -182,19 +182,19 @@ def basicHeating(condIn, perfTup, maxT):
         Trange.append(TB)
     Tdict = dict(zip(MgamRange, Trange))
     MgamOut, Tout = min(Tdict.items(), key=lambda x:abs(maxT - x[1]))
-    print("Mout =", MgamOut)
+    #print("Combustor Mach, gamma:", MgamOut[0], MgamOut[1])
     Mout = MgamOut[0]
     gamOut = MgamOut[1]
-    rayleighTupIn = rayleighRelations(perfTup, Min, gamA)
-    rayleighTupOut = rayleighRelations(perfTup, Mout, gamOut)
+    #rayleighTupIn = rayleighRelations(perfTup, Min, gamA)
+    #rayleighTupOut = rayleighRelations(perfTup, Mout, gamOut)
     inPr, inTr, inDr, inSPr, inSTr = rayleighRelations(perfTup, Min, gamA)
     ouPr, ouTr, ouDr, ouSPr, ouSTr = rayleighRelations(perfTup, Mout, gamOut)
     Pout = (condIn[1] / inPr) * ouPr
     Dout = (condIn[3] / inDr) * ouDr
     SPout = (condIn[4] / inSPr) * ouSPr
     STout = (condIn[5] / inSTr) * ouSTr
-    print("Tout =", Tout)
-    print("STout =", STout)
+    #print("Combustor T:", Tout)
+    #print("Combustor ST:", STout)
     SoSout = egg.idealSoS(gamOut, perfTup[2], Tout)
     Vout = Mout * SoSout
     CpOut = egg.realCp(perfTup[0], perfTup[1], Tout)
@@ -202,7 +202,62 @@ def basicHeating(condIn, perfTup, maxT):
     molOut = condIn[11]
     condOut = (Mout, Pout, Tout, Dout, SPout, STout, SoSout, Vout, gamOut, CpOut, RsOut, molOut)
     qOut = CpOut * (STout - condIn[5])
-    print(CpOut, "x (", STout, "-", condIn[5], ") =", qOut)
+    #print("Combustor heat flux (J/kg):", qOut)
+    return condOut, qOut
+
+def betterHeating(condIn, perfTup, maxT, qLimit):
+    Min = condIn[0]
+    Tin = condIn[2]
+    STin = condIn[5]
+    MarangeReversed = np.round(np.arange(1.001,Min,0.001), 6)
+    Marange = MarangeReversed[::-1]
+    tupList = []
+    gamA = egg.realGamma(perfTup[0], Tin)
+    T_TchA = egg.idealT_Tch(gamA, Min)
+    ST_STchA = egg.idealST_STch(gamA, Min)
+    TchA = Tin / T_TchA
+    STchA = STin / ST_STchA
+    for x in Marange:
+        T_TchB = egg.idealT_Tch(gamA, x)
+        TB = T_TchB * TchA
+        gamB = egg.realGamma(perfTup[0], TB)
+        ST_STch = egg.idealST_STch(gamB, x)
+        STB = ST_STch * STchA
+        listTup = (x, TB, STB, gamB)
+        tupList.append(listTup)
+    tM, tT, tST, tGam = min(tupList, key=lambda x:abs(maxT - x[1]))
+    tCp = egg.realCp(perfTup[0], perfTup[1], tT)
+    STlimit = ((qLimit / tCp) + STin)
+    qM, qT, qST, qGam = min(tupList, key=lambda x:abs(STlimit - x[2]))
+    tQ = tCp * (tST - STin)
+    if tQ > qLimit:
+        print("Stoichiometric combustion mixture")
+        Mout = qM
+        gamOut = qGam
+        Tout = qT
+    else:
+        print("Lean combustion mixture")
+        Mout = tM
+        gamOut = tGam
+        Tout = tT
+    inPr, inTr, inDr, inSPr, inSTr = rayleighRelations(perfTup, Min, gamA)
+    ouPr, ouTr, ouDr, ouSPr, ouSTr = rayleighRelations(perfTup, Mout, gamOut)
+    Pout = (condIn[1] / inPr) * ouPr
+    Dout = (condIn[3] / inDr) * ouDr
+    SPout = (condIn[4] / inSPr) * ouSPr
+    STout = (condIn[5] / inSTr) * ouSTr
+    SoSout = egg.idealSoS(gamOut, perfTup[2], Tout)
+    Vout = Mout * SoSout
+    CpOut = egg.realCp(perfTup[0], perfTup[1], Tout)
+    RsOut = condIn[10]
+    molOut = condIn[11]
+    condOut = (Mout, Pout, Tout, Dout, SPout, STout, SoSout, Vout, gamOut, CpOut, RsOut, molOut)
+    qOut = CpOut * (STout - condIn[5])
+    return condOut, qOut
+    
+        
+    
+        
     return condOut, qOut
 
 def shitQuasiDivNozzle(condIn, perfTup, expansionRatio):
@@ -252,7 +307,6 @@ def shitQuasiDivNozzle(condIn, perfTup, expansionRatio):
     return condOut, actualAratio
 
 def performance(conds, areaOut, deltas, thetas, LHV, q):
-    print("q =", q)
     condAmb = conds[0]
     cond1 = conds[1]
     cond2 = conds[2]
@@ -277,28 +331,24 @@ def performance(conds, areaOut, deltas, thetas, LHV, q):
     totalThrust = newtonianThrust + pressureThrust
     fuelFlow = (q / LHV) * massOut
     pressures = (cond1[1], cond2[1], cond3[1])
-    lift, drag, length, height = geom.solveDrag(deltas, thetas, pressures)
+    lift, drag, length, height, rampLength = geom.solveDrag(deltas, thetas, pressures)
     #print("drag", drag)
     excessThrust = totalThrust - drag
     Isp = (1 / (g * fuelFlow)) * excessThrust
-    print("Mass in:", massIn)
-    print("Mass mid:", massMid)
-    print("Mass out:", massOut)
+    print("Mass flow inlet:", massIn)
+    print("Mass flow combustor:", massMid)
+    print("Mass flow nozzle:", massOut)
     burger = (1.4, 1005, 287, 28.97)
-    print("CondInlet:", condInlet)
     zeroFuelThrust(condInlet, burger, 15, drag, ambientP)
-    return excessThrust, fuelFlow, Isp, drag, length, height
+    return excessThrust, fuelFlow, Isp, lift, drag, length, height, rampLength
 
 def zeroFuelThrust(condInlet, perfTup, expansionRatio, drag, ambientP):
     condOut, areaOut = shitQuasiDivNozzle(condInlet, perfTup, expansionRatio)
     massIn = condInlet[3] * condInlet[7] * 1
     newtonianThrust = (massIn * condOut[7]) - (massIn * condInlet[7])
     pressureThrust = (condOut[1] - ambientP)
-    zeroFuelThrust = (newtonianThrust + pressureThrust) - drag
-    print("Zero fuel Vin:", condInlet[7])
-    print("Zero fuel Vout:", condOut[7])
-    print("Zero fuel mflow:", massIn)
-    print("Zero fuel thrust:", zeroFuelThrust)
+    zeroFuelThrust = ((newtonianThrust + pressureThrust) - drag) / 1000
+    print("Zero fuel thrust (kN):", zeroFuelThrust)
     return None
 
 def initAmbient(gamma, Mlo, Mhi, Mstep, Q):
