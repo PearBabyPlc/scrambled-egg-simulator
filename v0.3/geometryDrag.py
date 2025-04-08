@@ -134,8 +134,10 @@ def solveDrag(deltas, thetas, pressures):
 
     length = abs(F1xm - s4l)
     height = abs(F1ym)
+
+    rampLength = length - (lengthF1 * math.cos(delta1))
     
-    return Ltotal, Dtotal, length, height
+    return Ltotal, Dtotal, length, height, rampLength
 
 #dd1 = math.radians(3)
 #dd2 = math.radians(6)
