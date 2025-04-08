@@ -103,7 +103,7 @@ def realStagTempRelation(T, ST, idealGamma, realGamma):
     return Msquared
 
 def realT_ST(idealGamma, M, T):
-    print("realIsentropic T_ST starting...")
+    #print("realIsentropic T_ST starting...")
     STmin = (1 / (idealT_ST(idealGamma, M))) * T * 0.4
     STmax = STmin * 2.75
     STrange = np.round(np.arange(STmin,STmax,1), 1)
@@ -112,11 +112,11 @@ def realT_ST(idealGamma, M, T):
     ST_Mach = dict(zip(STrange, STrelation))
     Msquared = M**2
     approxST, approxM = min(ST_Mach.items(), key=lambda x:abs(Msquared - x[1]))
-    Merror = abs(Msquared - approxM)
-    error = (Merror / Msquared) * 100
-    errorPercent = str(str(round(error, 6)) + "%")
+    #Merror = abs(Msquared - approxM)
+    #error = (Merror / Msquared) * 100
+    #errorPercent = str(str(round(error, 6)) + "%")
     T_ST = T / approxST
-    print("realIsentropic T_ST done! Error:", errorPercent)
+    #print("realIsentropic T_ST done! Error:", errorPercent)
     return T_ST
 
 def realP_SP(idealGamma, T_ST, T):
