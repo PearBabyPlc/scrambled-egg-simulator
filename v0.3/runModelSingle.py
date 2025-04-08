@@ -26,20 +26,12 @@ Q0 = 40000
 angle1 = 3
 angle2 = 6
 angle3 = 10
-maxTemp = 4000
-expansionRatio = 20
+maxTemp = 3200
+expansionRatio = 15
 
 config = (angle1, angle2, angle3)
 
-def Palt(gamma, M, Q):
-    P = (1 / ((gamma / 2) * M**2)) * Q
-    altRange = np.linspace(0, 47000, num=47000)
-    Prange = [isa.Pisa(x) for x in altRange]
-    PaltDict = dict(zip(altRange, Prange))
-    estAlt, estP = min(PaltDict.items(), key=lambda x: abs(P - x[1]))
-    return estAlt
-
-estAlt = Palt(gammaAir, M0, Q0)
+estAlt = egg.Palt(gammaAir, M0, Q0)
 T0, P0, D0 = isa.isa(estAlt)
 
 Rs0 = RsAir
@@ -61,21 +53,32 @@ print("Altitude:", estAlt, "metres")
 
 #iIntake oblique shock cascade
 print()
-intakePass, conds, thetas = solve.solveIntake(cond0, config, perfTup)
+intakePass, conds, thetas, deltas = solve.solveIntake(cond0, config, perfTup)
 cond1 = conds[0]
 cond2 = conds[1]
 cond3 = conds[2]
 cond4 = conds[3]
 
+qLimit = (120 * 1000000) / 34
 #Rayleigh flow combustion
 print()
-cond5, q = solve.basicHeating(cond4, perfTup, maxTemp)
+cond5, q = solve.betterHeating(cond4, perfTup, maxTemp, qLimit)
 print("Heat addition (J/kg):", q)
 solve.printCond("Post-combustion (5):", cond5)
 
 #Diverging nozzle
 print()
-cond6 = solve.shitQuasiDivNozzle(cond5, perfTup, expansionRatio)
+cond6, actualArea = solve.shitQuasiDivNozzle(cond5, perfTup, expansionRatio)
 solve.printCond("Nozzle exit (6):", cond6)
 
-#TODO Performance (thrust, Isp, drag, yada)
+#Performance (thrust, drag, isp)
+print()
+allConds = (cond0, cond1, cond2, cond3, cond4, cond5, cond6)
+thrust, fuelFlow, Isp, lift, drag, length, height, rampLength = solve.performance(allConds, actualArea, deltas, thetas, LHV, q)
+print("Thrust:", thrust)
+print("Fuel flow:", fuelFlow)
+print("Isp:", Isp)
+print("Lift:", lift)
+print("Total length:", length)
+print("Ramp legnth:", rampLength)
+print("Intake height:", height)
