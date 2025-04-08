@@ -34,19 +34,21 @@ fuelTup = (gammaH, CpH, RsH, molH)
 #test variables
 Mlo = 4
 Mhi = 15
-Mstep = 0.05
+Mstep = 0.1
 Q = 45000
 expansionRatio = 15
 tempLimit = 3800
-lengthLimit = 210
-angles1 = (4, 5, 6)
-angles2 = (3, 3, 3)
-angles3 = (5, 5, 5)
+lengthLimit = 255
+angles1 = (2, 3, 4, 5)
+angles2 = (6, 7, 8, 9)
+angles3 = (8, 10, 12, 14)
 
 #estAlt = egg.Palt(1.4, M, Q)
 
 ambientRange = solve.initAmbient(1.4, Mlo, Mhi, Mstep, Q)
-configs = list(itertools.product(angles1, angles2, angles3))
+configL = list(itertools.product(angles1, angles2, angles3))
+configS = set(configL)
+configs = list(configS)
 configsLen = len(configs)
 print("configsLen =", configsLen)
 Machlen = abs(Mlo - Mhi) / Mstep
@@ -76,11 +78,11 @@ def solveConfig(testConfig, cond0):
     failB = (0, 0, 0, 0, 0)
     try:
         if intakePass == True:
-            cond5, q = solve.basicHeating(cond4, perfTup, tempLimit)
+            cond5, q = solve.betterHeating(cond4, perfTup, tempLimit, qLimit)
             print("Combustor temp:", cond5[2])
             cond6, actualArea = solve.shitQuasiDivNozzle(cond5, perfTup, expansionRatio)
             allConds = (cond0, cond1, cond2, cond3, cond4, cond5, cond6)
-            thrust, fuelFlow, Isp, drag, length, height = solve.performance(allConds, actualArea, deltas, thetas, LHV, q)
+            thrust, fuelFlow, Isp, lift, drag, length, height, rampLength = solve.performance(allConds, actualArea, deltas, thetas, LHV, q)
             print("Fuel flow:", fuelFlow)
             print("Drag:", drag)
             performance = (thrust, fuelFlow, Isp, drag)
