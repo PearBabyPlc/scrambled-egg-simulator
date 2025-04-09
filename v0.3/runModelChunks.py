@@ -30,16 +30,16 @@ steamTUp = (gammaSteam, CpSteam, RsSteam, molSteam)
 fuelTup = (gammaH, CpH, RsH, molH)
 
 #test variables
-outputName = "chunks Q=45"
+outputName = "AoA=7deg"
 Mlo = 4
 Mhi = 16
 Mstep = 1
-Qdyn = 45000
-expansionRatio = 20 
-tempLimit = 4100
+Qdyn = 40000
+expansionRatio = 30
+tempLimit = 3800
 lengthLimit = 310
 IspLimit = 11000
-angles1 = (3, 4, 5, 6)
+angles1 = (7, 7, 7, 7)
 angles2 = (5, 6, 7, 8)
 angles3 = (6, 8, 10, 12)
 
