@@ -30,11 +30,12 @@ steamTUp = (gammaSteam, CpSteam, RsSteam, molSteam)
 fuelTup = (gammaH, CpH, RsH, molH)
 
 #test variables
+outputName = "chunks Q=45"
 Mlo = 4
 Mhi = 16
-Mstep = 0.1
-Q = 40000
-expansionRatio = 15
+Mstep = 1
+Qdyn = 45000
+expansionRatio = 20 
 tempLimit = 4100
 lengthLimit = 310
 IspLimit = 11000
@@ -67,7 +68,7 @@ scrambledEggString = R""".  /$$$$$$                                             
 print(scrambledEggString)
 print()
 #setup ranges
-ambientRange = solve.initAmbient(perfTup[0], Mlo, Mhi, Mstep, Q)
+ambientRange = solve.initAmbient(perfTup[0], Mlo, Mhi, Mstep, Qdyn)
 configL = list(itertools.product(angles1, angles2, angles3))
 configS = set(configL)
 configs = list(configS)
@@ -101,7 +102,7 @@ def solveConfig(testConfig, cond0):
         if intakePass == True:
             zP = (cond1[1], cond2[1], cond3[1])
             zL, zD, zL, zH, zR = geom.solveDrag(deltas, thetas, zP)
-            testExpansionRatio = zH
+            testExpansionRatio = expansionRatio
             print("Expansion ratio:", testExpansionRatio)
             cond5, q = solve.betterHeating(cond4, perfTup, tempLimit, qLimit)
             cond6, actualArea = solve.shitQuasiDivNozzle(cond5, perfTup, testExpansionRatio)
@@ -123,7 +124,11 @@ def solveConfig(testConfig, cond0):
                 arrayIsp.append(passIsp)
                 arrayLength.append(passLength)
                 print("CONFIG PASS! (intake pass, performance pass)")
-                return passMach, passConfig, passThrust, passIsp, passLength, passRamp, testExpansionRatio
+                passSPR = cond4[4] / cond0[4]
+                passTmax = cond5[2]
+                dynP = Qdyn
+                return passMach, dynP, passConfig, passLength, passRamp, passSPR, passTmax, testExpansionRatio, passThrust, passIsp
+                #######
             else:
                 print("CONFIG FAIL! (intake pass, performance fail)")
                 if length > lengthLimit:
@@ -134,20 +139,20 @@ def solveConfig(testConfig, cond0):
                     print("No thrust produced")
                 elif q > qLimit:
                     print("Heat addition exceeds stoichiometric limit")
-                return 0, failConfig, 0, 0, 0, 0, 0
+                return 0, failConfig, 0, 0, 0, 0, 0, 0, 0, 0
         else:
             print("CONFIG FAIL! (intake fail, performance fail)")
             print("Inlet Mach:", cond5[0])
             tryAsRamjet = (testConfig, cond0[0])
             tryRamjet.append(tryAsRamjet)
             print("Config and M added to ramjet list")
-            return 0, failConfig, 0, 0, 0, 0, 0
+            return 0, failConfig, 0, 0, 0, 0, 0, 0, 0, 0
     except:
         print("CONFIG ERROR!")
         exceptionConfigM = (testConfig, cond0[0])
         exceptionList.append(exceptionConfigM)
         print("Config and M added to exception list")
-        return 0, failConfig, 0, 0, 0, 0, 0
+        return 0, failConfig, 0, 0, 0, 0, 0, 0, 0, 0
 
 totalStart = time.time()
 machTimes = []
@@ -182,15 +187,15 @@ for x in ambientRange:
         SoS0 = egg.idealSoS(gam0, Rs0, T0)
         Vel0 = M0 * SoS0
         cond0 = (M0, P0, T0, D0, SP0, ST0, SoS0, Vel0, gam0, Cp0, Rs0, mol0)
-        passMach, passConfig, passThrust, passIsp, passLength, passRamp, passExpR = solveConfig(testConfig, cond0)
-        passThrIspLen = (passConfig, passThrust, passIsp, passLength, passMach, passRamp, passExpR)
+        passMach, Q, passConfig, passLength, passRamp, passSPR, passTmax, passExpR, passThrust, passIsp = solveConfig(testConfig, cond0)
+        passThrIspLen = (passMach, Q, passConfig, passLength, passRamp, passSPR, passTmax, passExpR, passThrust, passIsp)
         configThrIspLen.append(passThrIspLen)
         print("--------------------------------------------------")
         print()
         configEnd = time.time()
         configTime = configEnd - configStart
         configTimes.append(configTime)
-    sortedByThrust = sorted(configThrIspLen, key=lambda z : z[1])
+    sortedByThrust = sorted(configThrIspLen, key=lambda z : z[8])
     maxThrustConfig = sortedByThrust[-1]
     maxThrustConfig_atM.append(maxThrustConfig)
     print("==================================================")
@@ -200,11 +205,13 @@ for x in ambientRange:
 
 totalEnd = time.time()
 
-with open('chunks.csv', 'w', newline='') as csvfile:
+saveCSVStr = str(outputName + ".csv")
+with open(saveCSVStr, 'w', newline='') as csvfile:
     writer = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    writer.writerow(['Mach', 'Config', 'kN thrust', 'Isp', 'Length', 'Expansion ratio'])
+    writer.writerow(['M', 'Q', 'config', 'intakeLen', 'rampLen', 'intakeSPR', 'maxT', 'expansionR', 'thrust', 'Isp'])
     for x in maxThrustConfig_atM:
-        writer.writerow([x[4], x[0], x[1], x[2], x[3], x[6]])
+        configQuote = str("|" + str(x[2]) + "|")
+        writer.writerow([x[0], x[1], configQuote, x[3], x[4], x[5], x[6], x[7], x[8], x[9]])
 
 plotM = []
 plotThrust = []
@@ -213,30 +220,18 @@ plotExpR = []
 print()
 print("====================PLOT====================")
 for x in maxThrustConfig_atM:
-    plotTup = (x[4], x[1], x[2])
+    plotTup = (x[0], x[8], x[9])
     print()
-    print("Mach:", x[4], "| Config:", x[0], "| Thrust:", x[1], "| Isp:", x[2], "| Length:", x[3])
+    print("Mach:", x[0], "| Config:", x[2], "| Thrust:", x[8], "| Isp:", x[9])
     print("Ramp length:", x[5])
     if (plotTup[0] != 0) and (plotTup[1] != 0) and (plotTup[2] != 0):
-        plotM.append(x[4])
-        plotThrust.append(x[1])
-        plotIsp.append(x[2])
-        plotExpR.append(x[6])
+        plotM.append(x[0])
+        plotThrust.append(x[8])
+        plotIsp.append(x[9])
+        plotExpR.append(x[7])
         print("Added to plot")
     else:
         print("Excluded from plot")
-print("==================================================")
-
-print()
-print("====================TRY RAMJET====================")
-for x in tryRamjet:
-    print("Mach:", x[1], "| Config:", x[0])
-print("==================================================")
-
-print()
-print("====================Exceptions====================")
-for x in exceptionList:
-    print("Mach:", x[1], "| Config:", x[0])
 print("==================================================")
 
 print()
@@ -274,6 +269,7 @@ ax2.grid()
 ax3.plot(plotM, plotExpR)
 ax3.set_title("Expansion ratio")
 ax3.grid()
+saveFigStr = str(outputName + ".pdf")
 plt.savefig("chunks.pdf")
 plt.show()
                 
