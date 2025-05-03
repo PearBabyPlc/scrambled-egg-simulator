@@ -1,11 +1,15 @@
 import math
 
-B = 0.61 #molecular size constant
-C = 1000 #intermolecular force constant
+B = 6.1 * 10**(-5) #molecular size constant
+C = -2130.09088 #intermolecular force constant
 Theta = 3055 + (5 / 9)
 Rs = 287
 gammaIdeal = 1.4
 GamUpIdeal = gammaIdeal**2 - 3*gammaIdeal + 3
+
+def findIMFconst(B):
+    #do this shit later, Berthelot equation of state
+    pass
 
 def Ach_Aideal(M, gamma):
     a = (gamma + 1) / 2
