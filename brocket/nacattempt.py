@@ -85,4 +85,6 @@ def Ach_A(M, SD, ST):
 
 print("M = 0.5, SD = 1, ST = 4000")
 test = Ach_A(0.5, 1, 4000)
-print("Ach / A =", test)
+print("Ach / A =", test, "(calorically imperfect)")
+ideal = Ach_Aideal(0.5, gammaIdeal)
+print("Ach / A =", ideal, "(ideal)")
