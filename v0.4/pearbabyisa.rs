@@ -4,53 +4,29 @@ const R:f64 = 8.3145;
 const E:f64 = std::f64::consts::E;
 const MOL:f64 = 0.0289644;
 
-fn main() {
-    let (mut a, mut t, mut p, mut d) = get_isa_conditions(-1000.0);
-    println!("Geopotential altitude: {:?}", a);
-    println!("Temperature: {:?}", t);
-    println!("Pressure: {:?}", p);
-    println!("Density: {:?}", d);
-    println!();
-    (a, t, p, d) = get_isa_conditions(15000.0);
-    println!("Geopotential altitude: {:?}", a);
-    println!("Temperature: {:?}", t);
-    println!("Pressure: {:?}", p);
-    println!("Density: {:?}", d);
-    println!();
-    (a, t, p, d) = get_isa_conditions(25000.0);
-    println!("Geopotential altitude: {:?}", a);
-    println!("Temperature: {:?}", t);
-    println!("Pressure: {:?}", p);
-    println!("Density: {:?}", d);
-    println!();
-    (a, t, p, d) = get_isa_conditions(40000.0);
-    println!("Geopotential altitude: {:?}", a);
-    println!("Temperature: {:?}", t);
-    println!("Pressure: {:?}", p);
-    println!("Density: {:?}", d);
-    println!();
-}
-
 fn solve_conditions(ref_t:f64, ref_p:f64, ref_d:f64, lapse:f64, geop:f64, ref_geop:f64) -> (f64, f64, f64) {
     let temperature:f64 = ref_t - (lapse * (geop - ref_geop));
+    let pressure:f64;
+    let density:f64;
     if lapse == 0.0 {
         let p_exp:f64 = (-G * MOL * (geop - ref_geop)) / (R * ref_t);
-        let pressure:f64 = ref_p * E.powf(p_exp);
-        let density:f64 = ref_d * E.powf(p_exp);
-        return (temperature, pressure, density)
+        pressure = ref_p * E.powf(p_exp);
+        density = ref_d * E.powf(p_exp);
     } else {
         let p_exp:f64 = (G * MOL) / (R * lapse);
-        let pressure:f64 = ref_p * (1.0 - (lapse / ref_t)*(geop - ref_geop)).powf(p_exp);
+        pressure = ref_p * (1.0 - (lapse / ref_t)*(geop - ref_geop)).powf(p_exp);
         let d_exp:f64 = p_exp - 1.0;
-        let density:f64 = ref_d * ((ref_t - (geop - ref_geop)*lapse) / ref_t).powf(d_exp);
-        return (temperature, pressure, density)
+        density = ref_d * ((ref_t - (geop - ref_geop)*lapse) / ref_t).powf(d_exp);
     }
+    return (temperature, pressure, density)
 }
-fn get_isa_conditions(alt_geom: f64) -> (f64, f64, f64, f64) {
+pub fn get_isa_conditions(alt_geom: f64) -> (f64, f64, f64, f64) {
+    use std::time::Instant;
+    let start = Instant::now();
     let alt_geop:f64 = (SMB * alt_geom) / (SMB + alt_geom);
-    let mut kelvin:f64 = 0.0;
-    let mut pascal:f64 = 0.0;
-    let mut density:f64 = 0.0;
+    let kelvin:f64;
+    let pascal:f64;
+    let density:f64;
     if alt_geop < 11000.0 {
         (kelvin, pascal, density) = solve_conditions(288.15, 101325.0, 1.225, 0.0065, alt_geop, 0.0);
     } else if alt_geop < 20000.0 {
@@ -67,9 +43,9 @@ fn get_isa_conditions(alt_geom: f64) -> (f64, f64, f64, f64) {
         (kelvin, pascal, density) = solve_conditions(214.65, 3.96, 0.000064, 0.002, alt_geop, 71000.0);
     } else {
         println!("FAILURE WAA");
-        kelvin = 0.0;
-        pascal = 0.0;
-        density = 0.0;
+        (kelvin, pascal, density) = (0.0, 0.0, 0.0);
     }
-    return (alt_geop, kelvin, pascal, density);
+    let elapsed = start.elapsed();
+    println!("ISA lookup time: {:.2?}", elapsed);
+    return (alt_geop, kelvin, pascal, density)
 }
