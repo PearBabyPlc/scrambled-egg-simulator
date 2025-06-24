@@ -17,10 +17,10 @@ CpiO2 = (RsO2 / (gamiO2 - 1)) + RsO2
 CpiH2O = (RsH2O / (gamiH2O - 1)) + RsH2O
 LHV = 119960000
 stoich = 8
-mixture = 4.5
+mixture = 6
 Rs0 = (RsH2 + (RsO2 * mixture)) / (mixture + 1)
 deltaST = 5
-tempLimit = 4000
+tempLimit = 3500
 combustionEfficiency = 0.75
 
 
@@ -162,10 +162,82 @@ Vmax = math.sqrt(2 * Cpout * condOut[6])
 print("Vmax =", Vmax)
 
 print()
-print("DE LAVAL NOZZLE")
-expansionRatio = 100
+print("THROAT")
+expansionRatio = 75
+gamiIn = ((gamiH2*condOut[8])+(gamiO2*condOut[9])+(gamiH2O*condOut[10])) / (condOut[8] + condOut[9] + condOut[10])
 
+def solveContraction(condIn, gamiIn):
+    itIn = condIn[0]
+    Min = condIn[1]
+    Pin = condIn[2]
+    Tin = condIn[3]
+    Din = condIn[4]
+    SPout = condIn[5]
+    STout = condIn[6]
+    SDout = condIn[7]
+    nH2out = condIn[8]
+    nO2out = condIn[9]
+    nH2Oout = condIn[10]
+    gamIn = egg.gamT(gamiIn, Tin)
+    Tcrit = (1 / egg.idealST_T(gamIn, 1)) * STout
+    gamCrit = egg.gamT(gamiIn, Tcrit)
+    A_Ach = egg.idealA_Ach(gamCrit, Min)
+    Pout = (1 / egg.idealSP_P(gamCrit, 1)) * SPout
+    Tout = (1 / egg.idealST_T(gamCrit, 1)) * STout
+    Dout = (1 / egg.idealSD_D(gamCrit, 1)) * SDout
+    print("A_Ach =", A_Ach)
+    condOut = (itIn, 1, Pout, Tout, Dout, SPout, STout, SDout, nH2out, nO2out, nH2Oout)
+    return condOut
 
+condThroat = solveContraction(condOut, gamiIn)
+print()
+print("Mout =", condThroat[1])
+print("Pout =", float(condThroat[2] / 101325), "atm")
+print("Tout =", condThroat[3])
+print("Dout =", condThroat[4])
+print()
+print("NOZZLE")
+
+def solveExpansion(condIn, gamiIn, expansionRatio):
+    itIn = condIn[0]
+    Min = condIn[1]
+    Pin = condIn[2]
+    Tin = condIn[3]
+    Din = condIn[4]
+    SPout = condIn[5]
+    STout = condIn[6]
+    SDout = condIn[7]
+    nH2out = condIn[8]
+    nO2out = condIn[9]
+    nH2Oout = condIn[10]
+    gamIn = egg.gamT(gamiIn, Tin)
+    Mrange = np.linspace(1, 8, num=1000)
+    Arange = []
+    for x in Mrange:
+        Tx = STout * (1 / egg.idealST_T(gamIn, x))
+        gamx = egg.gamT(gamiIn, Tx)
+        Ax = egg.idealA_Ach(gamx, x)
+        Arange.append(Ax)
+    MAdict = dict(zip(Mrange, Arange))
+    Mout, Aout = min(MAdict.items(), key=lambda x:abs(expansionRatio - x[1]))
+    Tmid = STout * (1 / egg.idealST_T(gamIn, Mout))
+    gamOut = egg.gamT(gamiIn, Tmid)
+    Pout = (1 / egg.idealSP_P(gamOut, Mout)) * SPout
+    Tout = (1 / egg.idealST_T(gamOut, Mout)) * STout
+    Dout = (1 / egg.idealSD_D(gamOut, Mout)) * SDout
+    condOut = (itIn, Mout, Pout, Tout, Dout, SPout, STout, SDout, nH2out, nO2out, nH2Oout)
+    SoSout = math.sqrt(gamOut * (Pout / Dout))
+    print("SoS =", SoSout)
+    Vout = Mout * SoSout
+    Isp = Vout / 9.81
+    print("Isp =", Isp)
+    return condOut
+
+condFin = solveExpansion(condThroat, gamiIn, expansionRatio)
+print("Mout =", condFin[1])
+print("Pout =", condFin[2], "Pa")
+print("Tout =", condFin[3])
+print("Dout =", condFin[4])
 
     
     
